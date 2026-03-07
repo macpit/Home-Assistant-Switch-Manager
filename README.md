@@ -60,6 +60,19 @@ Switch manager is a centralised component to handle button pushes for your wirel
 5. Restart Home Assistant
 6. Go to Config -> Integrations and add Switch Manager
 
+### Switching from the original repo
+
+If you have [Sian-Lee-SA/Home-Assistant-Switch-Manager](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager) installed and want to switch to this fork:
+
+1. Remove the old `custom_components/switch_manager` folder (or uninstall via HACS)
+2. Restart Home Assistant
+3. Install this fork via HACS (see Option 1 above) or manually (see below)
+4. Restart Home Assistant
+
+Your switch configurations are stored separately in `/homeassistant/.storage/switch_manager` and will **not** be deleted when you remove the integration — all your configured switches will come back automatically.
+
+> **Tip:** The `.storage` folder is hidden by default in the File Editor add-on. To see it, go to the add-on settings, remove `.storage` from the ignore list (or disable `Enforce Basepath`), and also remove `.storage` from the filename filter at the bottom.
+
 ### Option 2: Manual installation
 
 1. Download the [latest release](https://github.com/macpit/Home-Assistant-Switch-Manager/releases)
