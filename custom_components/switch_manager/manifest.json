@@ -5,7 +5,7 @@
     "mqtt"
   ],
   "codeowners": [
-    "@Sian-Lee-SA"
+    "@macpit"
   ],
   "config_flow": true,
   "dependencies": [

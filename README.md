@@ -1,8 +1,8 @@
 # Home Assistant Switch Manager
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-[![switch_manager_release](https://badgen.net/github/release/Sian-Lee-SA/Home-Assistant-Switch-Manager/stable?scale=1.3&color=41bdf5)](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager/stable) [![switch_manager_stars](https://badgen.net/github/stars/Sian-Lee-SA/Home-Assistant-Switch-Manager?scale=1.3&color=41bdf5)](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager/stargazers) [![switch_manager_contributors](https://badgen.net/github/contributors/Sian-Lee-SA/Home-Assistant-Switch-Manager?scale=1.3&color=41bdf5)](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager)
+[![switch_manager_release](https://badgen.net/github/release/macpit/Home-Assistant-Switch-Manager/stable?scale=1.3&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager/releases) [![switch_manager_stars](https://badgen.net/github/stars/macpit/Home-Assistant-Switch-Manager?scale=1.3&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager/stargazers) [![switch_manager_contributors](https://badgen.net/github/contributors/macpit/Home-Assistant-Switch-Manager?scale=1.3&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager)
 
 ## About
 
@@ -24,7 +24,7 @@ Switch manager is a centralised component to handle button pushes for your wirel
 
 ## How to install
 
-1. Download the [component](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager/releases)
+1. Download the [component](https://github.com/macpit/Home-Assistant-Switch-Manager/releases)
 1. Place the folder `custom_components/switch_manager` into the `config/custom_components/` path of your home assistant installation
 1. Restart Home Assistant
 1. Goto Config -> Integration then find and add Switch Manager
@@ -167,7 +167,7 @@ conditions      | `list` [Condition](#condition) \| `string` [Template](https://
 
 If there are more than 1 button on the switch then you should be using a png (even one button should have an image for better visualisation) and defining the buttons position with the x, y, width and height properties. This also can be expanded to being a circular shape or a svg path.
 
-If a switch supports multiple button presses (so two buttons are pushed at the same time) then add another button with circle shape centered between the two buttons to indicate they're linked. Within the actions, the title should prefix **both**. See [Xiaomi Double Key](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager/blob/master/custom_components/switch_manager/blueprints/zigbee2mqtt-xiaomi-double-key-wxkg07lm.yaml) for an example.
+If a switch supports multiple button presses (so two buttons are pushed at the same time) then add another button with circle shape centered between the two buttons to indicate they're linked. Within the actions, the title should prefix **both**. See [Xiaomi Double Key](https://github.com/macpit/Home-Assistant-Switch-Manager/blob/master/custom_components/switch_manager/blueprints/zigbee2mqtt-xiaomi-double-key-wxkg07lm.yaml) for an example.
 
 > You will need to save the switch before feedback will be displayed on the UI, this is due to needing backend processing of a switch which isn't created until it's been saved.
 
@@ -203,7 +203,7 @@ To unify switches added to Switch Manager, it makes sense to conform to a naming
 * If action is double press or triple press and so on then the action should be **press 2x** or **press 3x** and so on
 * If the button supports a hold/long and hold/long release then there should be an action for both **hold** and **hold (released)** do **NOT** use the wording **long**
 * Do **NOT** use **short** or **short release** as this is generally a generic **init** or **press**
-* In the case where a switch allows multiple buttons to be pushed then you can prefix each action with **both** so a dual button press would be **both press** and **both press 2x** etc. This makes it clear to a user that the button they have selected is actually for multiple buttons. See [Xiaomi Double Key](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager/blob/master/custom_components/switch_manager/blueprints/zigbee2mqtt-xiaomi-double-key-wxkg07lm.yaml) for an example
+* In the case where a switch allows multiple buttons to be pushed then you can prefix each action with **both** so a dual button press would be **both press** and **both press 2x** etc. This makes it clear to a user that the button they have selected is actually for multiple buttons. See [Xiaomi Double Key](https://github.com/macpit/Home-Assistant-Switch-Manager/blob/master/custom_components/switch_manager/blueprints/zigbee2mqtt-xiaomi-double-key-wxkg07lm.yaml) for an example
 
 
 #### Order convention
@@ -363,7 +363,3 @@ If by chance your switches are invalid because of a blueprint change, then this 
 
 To fix this, edit the switch then click **fix**. Once the switch has been updated to match the blueprint, you'll want to ensure your actions and sequences are in the right spots! This is by design to have you manually click fix as to ensure you're aware of the changes and how your buttons and actions have changed.
 
-## Donate
-
-<a href="https://www.paypal.com/donate/?business=A82MM255CXF9L&no_recurring=0&item_name=Donating+will+help+justify+my+time+coding+and+doing+projects+that+also+benifits+others.+Any+amount+is+greatly+appreciated%21&currency_code=AUD"><img src="https://github.com/andreostrovsky/donate-with-paypal/raw/master/blue.svg" height="38"></a>
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/SianLee)
