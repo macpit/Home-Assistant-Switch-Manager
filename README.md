@@ -4,6 +4,15 @@
 
 [![switch_manager_release](https://img.shields.io/github/v/release/macpit/Home-Assistant-Switch-Manager?style=flat-square&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager/releases/latest) [![switch_manager_stars](https://img.shields.io/github/stars/macpit/Home-Assistant-Switch-Manager?style=flat-square&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager/stargazers) [![switch_manager_contributors](https://img.shields.io/github/contributors/macpit/Home-Assistant-Switch-Manager?style=flat-square&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager)
 
+> **This is a maintained fork of [Sian-Lee-SA/Home-Assistant-Switch-Manager](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager)**, which appears to be abandoned.
+>
+> **What's new in this fork:**
+> - Integrated all 10 open upstream PRs (9 new blueprints + bug fixes)
+> - Reverse-engineered the minified frontend JS into readable TypeScript source (`frontend/src/`)
+> - SVG max-width fix and Shelly BLU RC Button 4 fix
+>
+> See the [latest release notes](https://github.com/macpit/Home-Assistant-Switch-Manager/releases/latest) for details.
+
 ## About
 
 Switch manager is a centralised component to handle button pushes for your wireless switches. This includes anything passed through the event bus or MQTT. The component relies on switch blueprints which is easily made to allow GUI configuration of your switches and their button pushes. This helps remove clutter from the automations view as they will be handled independently by this component.
