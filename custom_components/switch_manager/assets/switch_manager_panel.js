@@ -625,6 +625,7 @@
     }
     #switch-image > svg {
       overflow: visible;
+      max-width: 800px;
     }
     #switch-image ha-svg-icon {
       fill: var(--primary-color);
