@@ -35,7 +35,7 @@ class SwitchManagerManagedSwitchData:
 @attr.s
 class SwitchManagerStoreData:
     version = attr.ib(type=str, default="0")
-    managed_switches = attr.ib(type=dict[str:SwitchManagerManagedSwitchData], factory=dict)
+    managed_switches = attr.ib(type=dict, factory=dict)
 
     @classmethod
     def from_dict(cls, data):

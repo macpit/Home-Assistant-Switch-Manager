@@ -2,3 +2,12 @@
 **/Thumbs.db
 **/__pycache__/
 .vscode
+
+# Build artifacts
+/switch_manager_panel.js
+/switch_manager_unpacked/
+/switch_manager.zip
+
+# Frontend
+frontend/node_modules/
+frontend/dist/

@@ -1,4 +1,4 @@
-import time, asyncio
+import time
 from .const import DOMAIN, LOGGER
 from .helpers import format_mqtt_message, get_val_from_str
 from homeassistant.core import HomeAssistant, Context, callback
@@ -189,7 +189,7 @@ class ManagedSwitchConfigButtonAction:
 
         self.script: Script = None
         self.active = bool(self.sequence)
-        asyncio.create_task( self.init_script() )
+        hass.async_create_task( self.init_script() )
 
     def _check_conditions( self, data ) -> bool:
         return self.blueprint.check_conditions( data )

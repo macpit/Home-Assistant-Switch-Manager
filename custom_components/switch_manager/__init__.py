@@ -40,7 +40,6 @@ async def async_setup( hass: HomeAssistant, config: ConfigType ):
 
     await async_migrate( hass, is_dev )
     
-    @callback
     async def reload_all( call ):
         for switch_id in hass.data[DOMAIN][CONF_MANAGED_SWITCHES]:
             hass.data[DOMAIN][CONF_MANAGED_SWITCHES][switch_id].stop()
@@ -62,8 +61,8 @@ async def async_setup( hass: HomeAssistant, config: ConfigType ):
     await _init_blueprints(hass)
     await _init_switch_configs(hass)
 
-    hass.async_add_executor_job( hass.services.register, DOMAIN, 'reload', reload_all )
-    hass.async_add_executor_job( hass.services.register, DOMAIN, 'set_variables', switch_merge_variables, SERVICE_SET_VARIABLES_SCHEMA )
+    hass.services.async_register( DOMAIN, 'reload', reload_all )
+    hass.services.async_register( DOMAIN, 'set_variables', switch_merge_variables, SERVICE_SET_VARIABLES_SCHEMA )
 
     # Return boolean to indicate that initialization was successful.
     return True
@@ -72,6 +71,12 @@ async def async_setup_entry( hass, config_entry ):
     await async_setup_view(hass)
     await async_setup_connections( hass )
 
+    return True
+
+async def async_unload_entry( hass: HomeAssistant, config_entry ):
+    """Unload a config entry."""
+    for switch_id in hass.data[DOMAIN].get(CONF_MANAGED_SWITCHES, {}):
+        hass.data[DOMAIN][CONF_MANAGED_SWITCHES][switch_id].stop()
     return True
 
 async def async_migrate( hass, in_dev ):

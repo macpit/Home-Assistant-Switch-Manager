@@ -14,9 +14,8 @@ from homeassistant.components.mqtt.models import ReceiveMessage
 
 COMPONENT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-MANIFEST = json.load(
-        open( os.path.join( COMPONENT_PATH, 'manifest.json') )
-    )
+with open( os.path.join( COMPONENT_PATH, 'manifest.json') ) as f:
+    MANIFEST = json.load(f)
     
 VERSION = MANIFEST['version']
 

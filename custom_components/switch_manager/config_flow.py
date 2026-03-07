@@ -2,8 +2,8 @@ from homeassistant import config_entries
 
 from .const import DOMAIN
 
-@config_entries.HANDLERS.register(DOMAIN)
-class SwitchManagerConfigFlow(config_entries.ConfigFlow):
+
+class SwitchManagerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 2
 
