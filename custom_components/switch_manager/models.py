@@ -196,15 +196,8 @@ class ManagedSwitchConfigButtonAction:
 
     async def init_script( self ):
         if self.active:
-            # Normalize action → service for HA schema compatibility
-            normalized = []
-            for step in self.sequence:
-                if isinstance(step, dict) and 'action' in step and 'service' not in step:
-                    step = dict(step)
-                    step['service'] = step.pop('action')
-                normalized.append(step)
             sequence = await async_validate_actions_config(
-                self._hass, cv.SCRIPT_SCHEMA(normalized)
+                self._hass, cv.SCRIPT_SCHEMA(self.sequence)
             )
             self.script = Script(
                     hass=self._hass, 
