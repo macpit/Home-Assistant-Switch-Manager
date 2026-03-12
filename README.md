@@ -10,6 +10,8 @@
 > - Integrated all 10 open upstream PRs (9 new blueprints + bug fixes)
 > - Reverse-engineered the minified frontend JS into readable TypeScript source (`frontend/src/`)
 > - SVG max-width fix and Shelly BLU RC Button 4 fix
+> - Duplicate switch from list view (v3.0.6)
+> - Sortable columns in switch list (v3.0.5)
 >
 > See the [latest release notes](https://github.com/macpit/Home-Assistant-Switch-Manager/releases/latest) for details.
 
@@ -20,7 +22,7 @@ We're looking for community input on what to build next! Vote by opening an [iss
 | Feature | Description | Status |
 |---------|-------------|--------|
 | Blueprint Import via URL/YAML | Import community blueprints directly from a URL or paste YAML — no manual file copying | Planned |
-| Switch Cloning / Templates | Use a configured switch as a template for a new one (same type, different actions) | Planned |
+| Switch Cloning / Templates | Duplicate a switch from the list view three-dot menu. Creates a full copy with "(Copy)" suffix and empty identifier. ([#4](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/4): search & replace entity IDs planned as follow-up) | **v3.0.6** |
 | Backup / Export | Export and import switch configurations as YAML for migration or backup | Planned |
 | Action Testing in Editor | Test-fire actions directly from the editor without pressing the physical switch | Planned |
 | Bulk Actions | Enable, disable or delete multiple switches at once | Idea |

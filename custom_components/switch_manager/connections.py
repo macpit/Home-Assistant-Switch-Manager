@@ -182,7 +182,47 @@ async def async_setup_connections( hass ):
         })
 
     @websocket_api.websocket_command({
-        vol.Required("type"): "switch_manager/copy_from_list", 
+        vol.Required("type"): "switch_manager/config/duplicate",
+        vol.Required("config_id"): cv.string
+    })
+    @websocket_api.async_response
+    async def websocket_duplicate_config(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
+    ) -> None:
+        store = hass.data[DOMAIN][CONF_STORE]
+        source = _get_switch_config(hass, msg['config_id'])
+
+        # Serialize buttons to plain dicts
+        buttons = []
+        for button in source.buttons:
+            actions = [action.as_dict() for action in button.actions]
+            buttons.append({'actions': actions})
+
+        config_data = {
+            'name': f"{source.name} (Copy)",
+            'identifier': '',
+            'blueprint': source.blueprint.id if source.valid_blueprint else source.blueprint,
+            'enabled': True,
+            'variables': dict(source.variables) if source.variables else None,
+            'rotate': source.rotate,
+            'buttons': buttons,
+        }
+
+        blueprint = _get_blueprint(hass, config_data['blueprint'])
+        new_config = ManagedSwitchConfig(
+            hass, blueprint, store.get_available_id(), config_data
+        )
+        await _set_switch_config(hass, new_config)
+        await store.set_managed_switch(new_config)
+
+        connection.send_result(msg['id'], {
+            "config_id": new_config.id
+        })
+
+    @websocket_api.websocket_command({
+        vol.Required("type"): "switch_manager/copy_from_list",
         vol.Required("blueprint_id"): cv.string,
         vol.Optional("skip_config_id"): cv.string
     })
@@ -207,4 +247,5 @@ async def async_setup_connections( hass ):
     websocket_api.async_register_command(hass, websocket_save_config)
     websocket_api.async_register_command(hass, websocket_toggle_config_enabled)
     websocket_api.async_register_command(hass, websocket_delete_config)
+    websocket_api.async_register_command(hass, websocket_duplicate_config)
     websocket_api.async_register_command(hass, websocket_copy_from_list)

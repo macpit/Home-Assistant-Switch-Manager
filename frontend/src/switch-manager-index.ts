@@ -31,6 +31,8 @@ const mdiGestureTapButton =
   "M13 5C15.21 5 17 6.79 17 9C17 10.5 16.2 11.77 15 12.46V11.24C15.61 10.69 16 9.89 16 9C16 7.34 14.66 6 13 6S10 7.34 10 9C10 9.89 10.39 10.69 11 11.24V12.46C9.8 11.77 9 10.5 9 9C9 6.79 10.79 5 13 5M20 20.5C19.97 21.32 19.32 21.97 18.5 22H13C12.62 22 12.26 21.85 12 21.57L8 17.37L8.74 16.6C8.93 16.39 9.2 16.28 9.5 16.28H9.7L12 18V9C12 8.45 12.45 8 13 8S14 8.45 14 9V13.47L15.21 13.6L19.15 15.79C19.68 16.03 20 16.56 20 17.14V20.5M20 2H4C2.9 2 2 2.9 2 4V12C2 13.11 2.9 14 4 14H8V12L4 12L4 4H20L20 12H18V14H20V13.96L20.04 14C21.13 14 22 13.09 22 12V4C22 2.9 21.11 2 20 2Z";
 const mdiArrowUp = "M7,15L12,10L17,15H7Z";
 const mdiArrowDown = "M7,10L12,15L17,10H7Z";
+const mdiContentCopy =
+  "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z";
 const mdiMagnify =
   "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z";
 
@@ -112,6 +114,11 @@ export class SwitchManagerIndex extends LitElement {
         path: item.enabled ? mdiStop : mdiPlay,
         label: item.enabled ? "Disable" : "Enable",
         action: () => this._toggleEnabled(item.switch_id, item.enabled),
+      },
+      {
+        path: mdiContentCopy,
+        label: "Duplicate",
+        action: () => this._duplicate(item.switch_id),
       },
       {
         path: mdiDelete,
@@ -292,6 +299,19 @@ export class SwitchManagerIndex extends LitElement {
       });
       this._populateSwitches();
       showToast(this, `Switch ${res.enabled ? "Enabled" : "Disabled"}`);
+    } catch (e: any) {
+      showToast(this, e.message);
+    }
+  }
+
+  private async _duplicate(switchId: string) {
+    try {
+      const res = await this.hass.callWS<{ config_id: string }>({
+        type: wsType("config/duplicate"),
+        config_id: switchId,
+      });
+      showToast(this, "Switch Duplicated");
+      navigate(navigateTo(`edit/${res.config_id}`));
     } catch (e: any) {
       showToast(this, e.message);
     }
