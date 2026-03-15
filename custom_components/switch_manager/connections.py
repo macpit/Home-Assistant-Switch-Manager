@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.components import websocket_api
 from homeassistant.components.websocket_api import event_message
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.script import Script
 
 from .schema import SWITCH_MANAGER_CONFIG_SCHEMA
 from .helpers import _get_blueprint, _get_switch_config, _remove_switch_config, _set_switch_config
@@ -240,6 +241,28 @@ async def async_setup_connections( hass ):
             "switches": data
         })
 
+    @websocket_api.websocket_command({
+        vol.Required("type"): "switch_manager/run_action",
+        vol.Required("action"): dict,
+    })
+    @websocket_api.async_response
+    async def websocket_run_action(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
+    ) -> None:
+        action_data = dict(msg["action"])
+        action_data.pop("metadata", None)
+        sequence = cv.SCRIPT_SCHEMA(action_data)
+        script_obj = Script(hass, sequence, "Switch Manager Run Action", DOMAIN)
+        try:
+            await script_obj.async_run(context=connection.context(msg))
+        except Exception as err:
+            connection.send_error(msg["id"], "action_failed", str(err))
+            return
+        connection.send_result(msg["id"])
+
+    websocket_api.async_register_command(hass, websocket_run_action)
     websocket_api.async_register_command(hass, websocket_configs)
     websocket_api.async_register_command(hass, websocket_blueprints)
     websocket_api.async_register_command(hass, websocket_blueprint_auto_discovery)
