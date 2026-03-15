@@ -47,10 +47,19 @@ BLUEPRINT_MQTT_SCHEMA = BLUEPRINT_SCHEMA.extend({
     vol.Optional('mqtt_topic_format'): cv.string,
     vol.Optional('mqtt_sub_topics', default=False): cv.boolean
 })
-SWITCH_MANAGER_CONFIG_ACTION_SCHEMA = vol.Schema({
-    vol.Required('mode', default=DEFAULT_SCRIPT_MODE): vol.In(SCRIPT_MODE_CHOICES),
-    vol.Required('sequence', default=[]): cv.ensure_list # cv.SCRIPT_SCHEMA: This was causing problems and not parsing json format when action delay etc was used
-})
+def _normalize_config_action(value):
+    """Normalize raw HA action dicts into {mode, sequence} wrapper."""
+    if isinstance(value, dict) and 'sequence' not in value and ('action' in value or 'service' in value):
+        return {'mode': DEFAULT_SCRIPT_MODE, 'sequence': [value]}
+    return value
+
+SWITCH_MANAGER_CONFIG_ACTION_SCHEMA = vol.All(
+    _normalize_config_action,
+    vol.Schema({
+        vol.Required('mode', default=DEFAULT_SCRIPT_MODE): vol.In(SCRIPT_MODE_CHOICES),
+        vol.Required('sequence', default=[]): cv.ensure_list # cv.SCRIPT_SCHEMA: This was causing problems and not parsing json format when action delay etc was used
+    })
+)
 SWITCH_MANAGER_CONFIG_BUTTON_SCHEMA = vol.Schema({
     vol.Required('actions'): vol.All(cv.ensure_list, [SWITCH_MANAGER_CONFIG_ACTION_SCHEMA])
 })
