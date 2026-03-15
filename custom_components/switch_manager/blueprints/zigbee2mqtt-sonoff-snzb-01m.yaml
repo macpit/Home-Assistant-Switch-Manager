@@ -1,0 +1,81 @@
+name: Sonoff SNZB-01M
+service: Zigbee2MQTT
+event_type: mqtt
+mqtt_topic_format: zigbee2mqtt/+/action
+buttons:
+  # Button 1
+  - d: M 19.034778,248.55357 C 19.707161,121.84566 117.4881,24.294483 233.60036,19.031327 V 249.86589 Z
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: single_button_1
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: double_button_1
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: triple_button_1
+      - title: hold
+        conditions:
+          - key: payload
+            value: long_button_1
+  # Button 2
+  - d: M 234.68082,19.495099 C 362.82414,7.2488221 487.16958,118.42689 480.94948,250.80709 l -247.10251,-0.47847 z
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: single_button_2
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: double_button_2
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: triple_button_2
+      - title: hold
+        conditions:
+          - key: payload
+            value: long_button_2
+  # Button 3
+  - d: M 269.33186,481.94129 C 141.18854,494.18756 12.536875,382.05255 18.756975,249.67235 l 251.408735,1.43541 z
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: single_button_3
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: double_button_3
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: triple_button_3
+      - title: hold
+        conditions:
+          - key: payload
+            value: long_button_3
+  # Button 4
+  - d: M 481.44264,251.92794 C 480.77025,378.63585 388.25247,466.13918 270.70481,481.45018 V 251.09409 Z
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: single_button_4
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: double_button_4
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: triple_button_4
+      - title: hold
+        conditions:
+          - key: payload
+            value: long_button_4
