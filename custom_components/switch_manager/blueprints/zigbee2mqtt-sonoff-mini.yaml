@@ -1,0 +1,11 @@
+name: Sonoff Mini (ZBMINIR2/ZBMINIL2)
+info: Sonoff Mini smart relay, neutral or no-neutral version.
+service: Zigbee2MQTT
+event_type: mqtt
+mqtt_topic_format: zigbee2mqtt/+/action
+buttons:
+  - actions:
+      - title: toggle
+        conditions:
+          - key: payload
+            value: toggle
