@@ -1,8 +1,10 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import type { HomeAssistant, Blueprint, BlueprintsResponse } from "../types";
 import { wsType, navigateTo, navigate, assetUrl } from "../helpers";
 import "../switch-manager-dialog";
+
+const mdiEdit = "M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z";
 
 @customElement("switch-manager-dialog-blueprint-selector")
 export class SwitchManagerDialogBlueprintSelector extends LitElement {
@@ -60,6 +62,17 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
                 @click=${() => this._selectBlueprint(bp)}
               >
                 <div class="card-content">
+                  ${bp.editable
+                    ? html`
+                        <button
+                          class="edit-btn"
+                          title="Edit blueprint"
+                          @click=${(e: Event) => this._editBlueprint(e, bp)}
+                        >
+                          <ha-svg-icon .path=${mdiEdit}></ha-svg-icon>
+                        </button>
+                      `
+                    : nothing}
                   <div class="image">
                     ${bp.has_image
                       ? html`<img src="${assetUrl(bp.id + ".png")}" />`
@@ -76,6 +89,7 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
             `
           )}
         </div>
+        <button slot="actions" @click=${this._createBlueprint}>Create Blueprint</button>
         <button slot="actions" @click=${this.closeDialog}>Cancel</button>
       </switch-manager-dialog>
     `;
@@ -84,6 +98,18 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
   private _selectBlueprint(bp: Blueprint) {
     this.closeDialog();
     navigate(navigateTo(`new/${bp.id}`));
+  }
+
+  private _createBlueprint() {
+    this.closeDialog();
+    navigate(navigateTo("blueprint/new"));
+  }
+
+  private _editBlueprint(e: Event, bp: Blueprint) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.closeDialog();
+    navigate(navigateTo(`blueprint/edit/${bp.id}`));
   }
 
   static styles = css`
@@ -104,6 +130,31 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
     .card-content {
       text-align: center;
       padding: 8px;
+      position: relative;
+    }
+    .edit-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      border: none;
+      background: var(--secondary-background-color);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      z-index: 1;
+    }
+    .edit-btn:hover {
+      background: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+    }
+    .edit-btn ha-svg-icon {
+      width: 18px;
+      height: 18px;
     }
     .image {
       height: 80px;

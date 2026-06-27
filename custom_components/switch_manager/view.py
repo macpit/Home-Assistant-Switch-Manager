@@ -2,7 +2,7 @@ import os, pathlib
 from .const import DOMAIN, CONF_BLUEPRINTS, BLUEPRINTS_FOLDER, PANEL_URL, NAME
 from .helpers import VERSION
 from homeassistant.core import HomeAssistant
-from homeassistant.components.frontend import async_register_built_in_panel
+from homeassistant.components.frontend import async_register_built_in_panel, async_remove_panel
 from homeassistant.components.http import StaticPathConfig
 
 async def async_setup_view(hass: HomeAssistant):
@@ -17,6 +17,10 @@ async def async_setup_view(hass: HomeAssistant):
 
     await hass.http.async_register_static_paths(staticJS)
     await async_bind_blueprint_images(hass)
+
+    # Remove any previously registered panel so reloading the config entry
+    # doesn't fail with "Overwriting panel switch_manager".
+    async_remove_panel(hass, "switch_manager", warn_if_unknown=False)
 
     async_register_built_in_panel(hass,
         component_name="custom",

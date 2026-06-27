@@ -1,6 +1,6 @@
 import time
 from .const import DOMAIN, LOGGER
-from .helpers import format_mqtt_message, get_val_from_str
+from .helpers import format_mqtt_message, get_val_from_str, _component_blueprint_exists
 from homeassistant.core import HomeAssistant, Context, callback
 from homeassistant.helpers.script import Script, async_validate_actions_config
 from homeassistant.helpers.condition import async_template as template_condition
@@ -57,6 +57,7 @@ class Blueprint:
         self.id = str(_id)
         self.name = config.get('name')
         self.has_image = has_image
+        self.editable = not _component_blueprint_exists(_id)
         self.service = config.get('service')
         self.event_type = config.get('event_type')
         self.is_mqtt = self.event_type == 'mqtt'

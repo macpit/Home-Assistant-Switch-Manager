@@ -12,6 +12,7 @@ from .const import (
 from .store import SwitchManagerStore
 from .helpers import load_blueprints, VERSION, deploy_blueprints, check_blueprints_folder_exists, _get_blueprint, _get_switch_config, _set_switch_config
 from .view import async_setup_view, async_bind_blueprint_images
+from homeassistant.components.frontend import async_remove_panel
 from . import models
 from .schema import BLUEPRINT_MQTT_SCHEMA, BLUEPRINT_EVENT_SCHEMA, SERVICE_SET_VARIABLES_SCHEMA
 from .connections import async_setup_connections
@@ -77,6 +78,7 @@ async def async_unload_entry( hass: HomeAssistant, config_entry ):
     """Unload a config entry."""
     for switch_id in hass.data[DOMAIN].get(CONF_MANAGED_SWITCHES, {}):
         hass.data[DOMAIN][CONF_MANAGED_SWITCHES][switch_id].unload()
+    async_remove_panel(hass, "switch_manager", warn_if_unknown=False)
     return True
 
 async def async_migrate( hass, in_dev ):

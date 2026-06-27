@@ -5,6 +5,7 @@ import type { HomeAssistant, Panel, Route } from "./types";
 
 import "./switch-manager-index";
 import "./switch-manager-switch-editor";
+import "./switch-manager-blueprint-editor";
 
 // HA runtime components the panel + action editor depend on. loadHaComponents()
 // drives HA's config/automation route loader, which transitively registers the
@@ -41,6 +42,10 @@ export class SwitchManagerPanel extends LitElement {
       this._params = { action: "new", blueprint: parts[2] };
     } else if (parts[1] === "edit") {
       this._params = { action: "edit", id: parts[2] };
+    } else if (parts[1] === "blueprint" && parts[2] === "new") {
+      this._params = { action: "blueprint-new" };
+    } else if (parts[1] === "blueprint" && parts[2] === "edit" && parts[3]) {
+      this._params = { action: "blueprint-edit", id: parts[3] };
     } else {
       this._params = {};
     }
@@ -53,6 +58,20 @@ export class SwitchManagerPanel extends LitElement {
   render() {
     if (!this._componentsLoaded) {
       return html`<div class="loading">Loading…</div>`;
+    }
+    if (
+      this._params.action === "blueprint-new" ||
+      this._params.action === "blueprint-edit"
+    ) {
+      return html`
+        <switch-manager-blueprint-editor
+          .hass=${this.hass}
+          .narrow=${this.narrow}
+          .route=${this._route}
+          .panel=${this.panel}
+          .params=${this._params}
+        ></switch-manager-blueprint-editor>
+      `;
     }
     if ("action" in this._params) {
       return html`

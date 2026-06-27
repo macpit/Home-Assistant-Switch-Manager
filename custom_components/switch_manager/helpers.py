@@ -1,5 +1,6 @@
 """Helpers for switch_manager integration."""
-import json, pathlib, os, shutil, enum
+import base64, binascii, json, pathlib, os, re, shutil, enum
+import yaml
 from homeassistant.core import HomeAssistant
 from annotatedyaml.loader import load_yaml
 from .const import (
@@ -18,6 +19,10 @@ with open( os.path.join( COMPONENT_PATH, 'manifest.json') ) as f:
     MANIFEST = json.load(f)
     
 VERSION = MANIFEST['version']
+PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
+BLUEPRINT_ID_PATTERN = re.compile(r'^[a-z0-9][a-z0-9_-]*$')
+MAX_BLUEPRINT_IMAGE_WIDTH = 800
+MAX_BLUEPRINT_IMAGE_HEIGHT = 500
 
 async def check_blueprints_folder_exists( hass ):
     dest_folder = pathlib.Path(hass.config.path(BLUEPRINTS_FOLDER, DOMAIN))
@@ -82,6 +87,67 @@ async def load_blueprints( hass ):
     
     await hass.async_add_executor_job(doFiles)
     return results
+
+def _component_blueprint_exists( blueprint_id: str ):
+    component_blueprints_path = os.path.join( COMPONENT_PATH, 'blueprints' )
+    return os.path.exists(os.path.join(component_blueprints_path, f"{blueprint_id}.yaml"))
+
+def _decode_blueprint_png( image: str | None ):
+    if not image:
+        return None
+
+    if image.startswith("data:"):
+        header, sep, payload = image.partition(",")
+        if not sep or "image/png" not in header:
+            raise HomeAssistantError("Blueprint image must be a PNG data URL")
+        image = payload
+
+    try:
+        data = base64.b64decode(image, validate=True)
+    except (binascii.Error, ValueError) as ex:
+        raise HomeAssistantError("Blueprint image is not valid base64") from ex
+
+    if not data.startswith(PNG_SIGNATURE):
+        raise HomeAssistantError("Blueprint image must be a PNG")
+    if len(data) < 24:
+        raise HomeAssistantError("Blueprint image is not a valid PNG")
+
+    width = int.from_bytes(data[16:20], "big")
+    height = int.from_bytes(data[20:24], "big")
+    if width > MAX_BLUEPRINT_IMAGE_WIDTH or height > MAX_BLUEPRINT_IMAGE_HEIGHT:
+        raise HomeAssistantError(
+            f"Blueprint image must be at most {MAX_BLUEPRINT_IMAGE_WIDTH}px wide and "
+            f"{MAX_BLUEPRINT_IMAGE_HEIGHT}px tall"
+        )
+
+    return data
+
+async def save_blueprint( hass, blueprint_id: str, blueprint: dict, image: str | None = None, overwrite: bool = False ):
+    if not BLUEPRINT_ID_PATTERN.match(blueprint_id):
+        raise HomeAssistantError("Blueprint id may only contain lowercase letters, numbers, dashes and underscores")
+
+    if _component_blueprint_exists(blueprint_id):
+        raise HomeAssistantError("Bundled blueprints cannot be overwritten from the editor")
+
+    dest_folder = pathlib.Path(hass.config.path(BLUEPRINTS_FOLDER, DOMAIN))
+    yaml_path = pathlib.Path(dest_folder, f"{blueprint_id}.yaml")
+    png_path = pathlib.Path(dest_folder, f"{blueprint_id}.png")
+    image_data = _decode_blueprint_png(image)
+
+    def doFiles():
+        os.makedirs(dest_folder, exist_ok=True)
+        if yaml_path.exists() and not overwrite:
+            raise HomeAssistantError("A blueprint with this id already exists")
+
+        with open(yaml_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(blueprint, f, sort_keys=False, allow_unicode=False)
+
+        if image_data is not None:
+            with open(png_path, "wb") as f:
+                f.write(image_data)
+
+    await hass.async_add_executor_job(doFiles)
+    return blueprint_id
 
 def format_mqtt_message( message: ReceiveMessage):
     try:

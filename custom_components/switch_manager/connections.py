@@ -10,8 +10,11 @@ from homeassistant.components.websocket_api import event_message
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.script import Script
 
-from .schema import SWITCH_MANAGER_CONFIG_SCHEMA
-from .helpers import _get_blueprint, _get_switch_config, _remove_switch_config, _set_switch_config
+from homeassistant.config import format_schema_error
+from homeassistant.exceptions import HomeAssistantError
+
+from .schema import BLUEPRINT_EVENT_SCHEMA, BLUEPRINT_MQTT_SCHEMA, BLUEPRINT_SAVE_SCHEMA, SWITCH_MANAGER_CONFIG_SCHEMA
+from .helpers import _get_blueprint, _get_switch_config, _remove_switch_config, _set_switch_config, save_blueprint
 from .const import DOMAIN, CONF_BLUEPRINTS, CONF_MANAGED_SWITCHES, CONF_STORE
 from .models import ManagedSwitchConfig
 
@@ -32,6 +35,58 @@ async def async_setup_connections( hass ):
                 else { "blueprints": hass.data[DOMAIN].get(CONF_BLUEPRINTS) })
 
         connection.send_result( msg["id"], data )
+
+    @websocket_api.websocket_command({
+        vol.Required("type"): "switch_manager/blueprint/save",
+        vol.Required("payload"): BLUEPRINT_SAVE_SCHEMA
+    })
+    @websocket_api.async_response
+    async def websocket_save_blueprint(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
+    ) -> None:
+        payload = msg["payload"]
+        raw_blueprint = payload["blueprint"]
+        try:
+            blueprint = (
+                BLUEPRINT_MQTT_SCHEMA(raw_blueprint)
+                if raw_blueprint.get("event_type") == "mqtt"
+                else BLUEPRINT_EVENT_SCHEMA(raw_blueprint)
+            )
+            if len(blueprint.get("buttons")) == 1:
+                button = blueprint.get("buttons")[0]
+                if button.get("x") or button.get("y") or button.get("width") or button.get("height") or button.get("d"):
+                    raise HomeAssistantError("Single button blueprints must not define button shape geometry")
+
+            blueprint_id = await save_blueprint(
+                hass,
+                payload["id"],
+                blueprint,
+                payload.get("image"),
+                payload.get("overwrite", False),
+            )
+
+            from . import _init_blueprints
+            from .view import async_bind_blueprint_images
+
+            await _init_blueprints(hass)
+            await async_bind_blueprint_images(hass)
+        except vol.Invalid as ex:
+            connection.send_error(
+                msg["id"],
+                "invalid_blueprint",
+                format_schema_error(hass, ex, f"{DOMAIN} {CONF_BLUEPRINTS}({payload['id']})", raw_blueprint),
+            )
+            return
+        except HomeAssistantError as ex:
+            connection.send_error(msg["id"], "invalid_blueprint", str(ex))
+            return
+
+        connection.send_result(msg["id"], {
+            "blueprint_id": blueprint_id,
+            "blueprint": _get_blueprint(hass, blueprint_id)
+        })
 
     @websocket_api.websocket_command({
         vol.Required("type"): "switch_manager/blueprints/auto_discovery", 
@@ -265,6 +320,7 @@ async def async_setup_connections( hass ):
     websocket_api.async_register_command(hass, websocket_run_action)
     websocket_api.async_register_command(hass, websocket_configs)
     websocket_api.async_register_command(hass, websocket_blueprints)
+    websocket_api.async_register_command(hass, websocket_save_blueprint)
     websocket_api.async_register_command(hass, websocket_blueprint_auto_discovery)
     websocket_api.async_register_command(hass, websocket_monitor_config)
     websocket_api.async_register_command(hass, websocket_save_config)

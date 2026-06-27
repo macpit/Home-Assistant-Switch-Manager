@@ -57,6 +57,7 @@ export interface Blueprint {
   name: string;
   service: string;
   has_image: boolean;
+  editable?: boolean;
   event_type: string;
   identifier_key: string;
   mqtt_topic_format?: string;

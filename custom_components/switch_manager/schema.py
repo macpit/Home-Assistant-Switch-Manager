@@ -47,6 +47,13 @@ BLUEPRINT_MQTT_SCHEMA = BLUEPRINT_SCHEMA.extend({
     vol.Optional('mqtt_topic_format'): cv.string,
     vol.Optional('mqtt_sub_topics', default=False): cv.boolean
 })
+BLUEPRINT_SAVE_SCHEMA = vol.Schema({
+    vol.Required('id'): cv.string,
+    vol.Required('blueprint'): dict,
+    vol.Optional('image'): vol.Any(None, cv.string),
+    vol.Optional('overwrite', default=False): bool,
+})
+
 def _normalize_config_action(value):
     """Normalize raw HA action dicts into {mode, sequence} wrapper."""
     if isinstance(value, dict) and 'sequence' not in value and ('action' in value or 'service' in value):
