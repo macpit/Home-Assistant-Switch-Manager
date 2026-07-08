@@ -9,6 +9,7 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
   @state() private _params?: any;
   @state() private _blueprints: Blueprint[] = [];
   @state() private _filter = "";
+  @state() private _protocol = "";
   private hass!: HomeAssistant;
 
   public showDialog(params: any) {
@@ -21,6 +22,11 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
     this._params = undefined;
     this._blueprints = [];
     this._filter = "";
+    this._protocol = "";
+  }
+
+  private _protoKey(bp: Blueprint): string {
+    return (bp.event_type || "").split(/[._]/)[0];
   }
 
   private async _loadBlueprints() {
@@ -33,13 +39,22 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
   render() {
     if (!this._params) return html``;
 
-    const filtered = this._filter
-      ? this._blueprints.filter(
-          (bp) =>
-            bp.name.toLowerCase().includes(this._filter.toLowerCase()) ||
-            bp.service.toLowerCase().includes(this._filter.toLowerCase())
-        )
-      : this._blueprints;
+    const counts = new Map<string, number>();
+    for (const bp of this._blueprints) {
+      const k = this._protoKey(bp);
+      if (k) counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    const options = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+
+    const filtered = this._blueprints.filter((bp) => {
+      const matchText =
+        !this._filter ||
+        bp.name.toLowerCase().includes(this._filter.toLowerCase()) ||
+        bp.service.toLowerCase().includes(this._filter.toLowerCase());
+      const matchProto =
+        !this._protocol || this._protoKey(bp) === this._protocol;
+      return matchText && matchProto;
+    });
 
     return html`
       <switch-manager-dialog @closed=${this.closeDialog} heading="Select Blueprint">
@@ -51,6 +66,18 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
           @input=${(e: Event) =>
             (this._filter = (e.target as HTMLInputElement).value)}
         />
+        <select
+          class="protocol"
+          .value=${this._protocol}
+          @change=${(e: Event) =>
+            (this._protocol = (e.target as HTMLSelectElement).value)}
+        >
+          <option value="">All (${this._blueprints.length})</option>
+          ${options.map(
+            ([key, count]) =>
+              html`<option value=${key}>${key} (${count})</option>`
+          )}
+        </select>
         <div class="blueprints">
           ${filtered.map(
             (bp) => html`
@@ -128,7 +155,8 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
       color: var(--secondary-text-color);
       font-size: 0.85em;
     }
-    .search {
+    .search,
+    .protocol {
       display: block;
       width: 100%;
       box-sizing: border-box;
