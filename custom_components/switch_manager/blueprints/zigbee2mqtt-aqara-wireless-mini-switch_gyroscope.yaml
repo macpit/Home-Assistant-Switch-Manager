@@ -1,4 +1,4 @@
-name: Aqara Wireless Mini Switch
+name: Aqara Wireless Mini Switch WXKG12LM (with gyroscope)
 service: Zigbee2MQTT
 event_type: mqtt
 mqtt_topic_format: zigbee2mqtt/+/action
