@@ -24,10 +24,6 @@ buttons:
         conditions:
           - key: payload
             value: quintuple
-        - title: press many times
-        conditions:
-          - key: payload
-            value: many
       - title: hold
         conditions:
           - key: payload
@@ -36,3 +32,7 @@ buttons:
         conditions:
           - key: payload
             value: release
+        - title: press many times
+        conditions:
+          - key: payload
+            value: many
