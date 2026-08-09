@@ -1,0 +1,106 @@
+name: Smarthjemmet QUAD-ZIG-SW
+service: Zigbee2MQTT
+event_type: mqtt
+mqtt_topic_format: zigbee2mqtt/+/action
+info: By default all 4 inputs are in multi-click mode (single/double/triple/hold/release). Setting an input's switch_type to "switch" instead makes it fire only press and hold (released) instantly, without the multi-click debounce delay.
+buttons:
+  - x: 20
+    y: 20
+    width: 185
+    height: 150
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_1_single
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: button_1_double
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: button_1_triple
+      - title: hold
+        conditions:
+          - key: payload
+            value: button_1_hold
+      - title: hold (released)
+        conditions:
+          - key: payload
+            value: button_1_release
+  - x: 213
+    y: 20
+    width: 185
+    height: 150
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_2_single
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: button_2_double
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: button_2_triple
+      - title: hold
+        conditions:
+          - key: payload
+            value: button_2_hold
+      - title: hold (released)
+        conditions:
+          - key: payload
+            value: button_2_release
+  - x: 20
+    y: 248
+    width: 185
+    height: 150
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_3_single
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: button_3_double
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: button_3_triple
+      - title: hold
+        conditions:
+          - key: payload
+            value: button_3_hold
+      - title: hold (released)
+        conditions:
+          - key: payload
+            value: button_3_release
+  - x: 213
+    y: 248
+    width: 185
+    height: 150
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_4_single
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: button_4_double
+      - title: press 3x
+        conditions:
+          - key: payload
+            value: button_4_triple
+      - title: hold
+        conditions:
+          - key: payload
+            value: button_4_hold
+      - title: hold (released)
+        conditions:
+          - key: payload
+            value: button_4_release
