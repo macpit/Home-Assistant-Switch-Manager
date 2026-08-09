@@ -1,4 +1,4 @@
-name: Aqara Wireless Mini Switch WXKG11LM
+name: Aqara T1 Wireless Mini Switch
 service: Zigbee2MQTT
 event_type: mqtt
 mqtt_topic_format: zigbee2mqtt/+/action
@@ -20,6 +20,10 @@ buttons:
         conditions:
           - key: payload
             value: quadruple
+      - title: press 5x
+        conditions:
+          - key: payload
+            value: quintuple
       - title: hold
         conditions:
           - key: payload
@@ -28,7 +32,7 @@ buttons:
         conditions:
           - key: payload
             value: release
-      - title: shake
+      - title: press many times
         conditions:
           - key: payload
-            value: shake
+            value: many
