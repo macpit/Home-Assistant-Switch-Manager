@@ -20,7 +20,7 @@ buttons:
         conditions:
           - key: payload
             value: quadruple
-        - title: press 5x
+      - title: press 5x
         conditions:
           - key: payload
             value: quintuple
@@ -32,7 +32,7 @@ buttons:
         conditions:
           - key: payload
             value: release
-        - title: press many times
+      - title: press many times
         conditions:
           - key: payload
             value: many
