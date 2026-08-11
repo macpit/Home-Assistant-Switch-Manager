@@ -4,116 +4,83 @@ event_type: state_changed
 identifier_key: device_id
 state_domain: event
 info: >-
-  IKEA BILRESA scroll-wheel remote over Matter. The lower part of the remote has
-  three LEDs that select one of three targets/modes (pressing it only cycles the
-  LED and produces NO Home Assistant event). Per mode the wheel offers the same
-  three gestures, giving nine Matter generic-switch endpoints. Home Assistant
-  exposes each endpoint as a separate event.* entity.
+  IKEA BILRESA scroll-wheel remote over Matter. The three LEDs on the lower part
+  select one of three targets/modes (pressing the lower part only cycles the LED
+  and produces NO Home Assistant event). Per mode the wheel offers the same set of
+  gestures, exposed as Matter generic-switch endpoints (event.* entities in HA).
 
 
-  The buttons are arranged as a control matrix: rows = LED 1/2/3, columns = scroll
-  left / press / scroll right. Each cell is one endpoint (EP1..EP9).
+  The three buttons here are the three LEDs (left = LED 1, middle = LED 2, right =
+  LED 3). Select a LED, then define its actions: press / press 2x / hold / hold
+  release / rotate right / rotate left.
 
 
   Set this switch's identifier to the remote's DEVICE - use auto-discovery and
   interact with the remote once, or paste the Home Assistant device id.
 
 
-  Scroll cells fire once per turn with the notch count in
+  Rotate actions fire once per turn with the notch count in
   {{ data.totalNumberOfPressesCounted }} (batched, capped at 8) - use it to scale
   brightness/volume. Also available: {{ data.event_type }}, {{ data.endpoint }},
   {{ data.entity_id }}.
 
 
-  The endpoint-to-gesture numbering is the common BILRESA layout; if your unit
-  differs, open the monitor, interact with the remote to see which endpoint fires,
-  and adjust the endpoint values (or match on entity_id instead).
+  Endpoint numbering follows the common BILRESA layout (per LED: rotate right, then
+  rotate left, then press). If your unit differs, open the monitor, interact with
+  the remote to see which endpoint fires, and adjust the endpoint numbers in the
+  conditions below.
 buttons:
-  # ---- Row: LED 1 ----
-  - x: 520
-    y: 120
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "2"
-    actions: &scroll_actions
-      - title: Scroll
-  - x: 644
-    y: 120
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "3"
-    actions: &press_actions
+  # LED 1  (endpoints: rotate right = 1, rotate left = 2, press = 3)
+  - x: 160
+    y: 465
+    width: 24
+    conditions: "{{ data.endpoint in ['1','2','3'] }}"
+    actions:
       - title: Press
-        conditions:
-          - key: event_type
-            value: multi_press_1
+        conditions: "{{ data.endpoint == '3' and data.event_type == 'multi_press_1' }}"
+      - title: Press 2x
+        conditions: "{{ data.endpoint == '3' and data.event_type == 'multi_press_2' }}"
       - title: Hold
-        conditions:
-          - key: event_type
-            value: long_press
+        conditions: "{{ data.endpoint == '3' and data.event_type == 'long_press' }}"
       - title: Hold (released)
-        conditions:
-          - key: event_type
-            value: long_release
-  - x: 768
-    y: 120
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "1"
-    actions: *scroll_actions
-  # ---- Row: LED 2 ----
-  - x: 520
-    y: 306
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "5"
-    actions: *scroll_actions
-  - x: 644
-    y: 306
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "6"
-    actions: *press_actions
-  - x: 768
-    y: 306
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "4"
-    actions: *scroll_actions
-  # ---- Row: LED 3 ----
-  - x: 520
-    y: 492
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "8"
-    actions: *scroll_actions
-  - x: 644
-    y: 492
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "9"
-    actions: *press_actions
-  - x: 768
-    y: 492
-    width: 110
-    height: 170
-    conditions:
-      - key: endpoint
-        value: "7"
-    actions: *scroll_actions
+        conditions: "{{ data.endpoint == '3' and data.event_type == 'long_release' }}"
+      - title: Rotate right
+        conditions: "{{ data.endpoint == '1' }}"
+      - title: Rotate left
+        conditions: "{{ data.endpoint == '2' }}"
+  # LED 2  (endpoints: rotate right = 4, rotate left = 5, press = 6)
+  - x: 210
+    y: 465
+    width: 24
+    conditions: "{{ data.endpoint in ['4','5','6'] }}"
+    actions:
+      - title: Press
+        conditions: "{{ data.endpoint == '6' and data.event_type == 'multi_press_1' }}"
+      - title: Press 2x
+        conditions: "{{ data.endpoint == '6' and data.event_type == 'multi_press_2' }}"
+      - title: Hold
+        conditions: "{{ data.endpoint == '6' and data.event_type == 'long_press' }}"
+      - title: Hold (released)
+        conditions: "{{ data.endpoint == '6' and data.event_type == 'long_release' }}"
+      - title: Rotate right
+        conditions: "{{ data.endpoint == '4' }}"
+      - title: Rotate left
+        conditions: "{{ data.endpoint == '5' }}"
+  # LED 3  (endpoints: rotate right = 7, rotate left = 8, press = 9)
+  - x: 260
+    y: 465
+    width: 24
+    conditions: "{{ data.endpoint in ['7','8','9'] }}"
+    actions:
+      - title: Press
+        conditions: "{{ data.endpoint == '9' and data.event_type == 'multi_press_1' }}"
+      - title: Press 2x
+        conditions: "{{ data.endpoint == '9' and data.event_type == 'multi_press_2' }}"
+      - title: Hold
+        conditions: "{{ data.endpoint == '9' and data.event_type == 'long_press' }}"
+      - title: Hold (released)
+        conditions: "{{ data.endpoint == '9' and data.event_type == 'long_release' }}"
+      - title: Rotate right
+        conditions: "{{ data.endpoint == '7' }}"
+      - title: Rotate left
+        conditions: "{{ data.endpoint == '8' }}"
