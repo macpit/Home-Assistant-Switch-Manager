@@ -13,7 +13,7 @@ from .store import SwitchManagerStore
 from .helpers import load_blueprints, VERSION, deploy_blueprints, check_blueprints_folder_exists, _get_blueprint, _get_switch_config, _set_switch_config
 from .view import async_setup_view, async_bind_blueprint_images
 from . import models
-from .schema import BLUEPRINT_MQTT_SCHEMA, BLUEPRINT_EVENT_SCHEMA, SERVICE_SET_VARIABLES_SCHEMA
+from .schema import BLUEPRINT_MQTT_SCHEMA, BLUEPRINT_EVENT_SCHEMA, BLUEPRINT_STATE_SCHEMA, SERVICE_SET_VARIABLES_SCHEMA
 from .connections import async_setup_connections
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config import format_schema_error
@@ -94,7 +94,13 @@ async def _init_blueprints( hass: HomeAssistant ):
     blueprints = hass.data[DOMAIN][CONF_BLUEPRINTS] = {}
     for config in await load_blueprints(hass):
         try:
-            c_validated = BLUEPRINT_MQTT_SCHEMA(config.get('data')) if config.get('data').get('event_type') == 'mqtt' else BLUEPRINT_EVENT_SCHEMA(config.get('data'))
+            event_type = config.get('data').get('event_type')
+            if event_type == 'mqtt':
+                c_validated = BLUEPRINT_MQTT_SCHEMA(config.get('data'))
+            elif event_type == 'state_changed':
+                c_validated = BLUEPRINT_STATE_SCHEMA(config.get('data'))
+            else:
+                c_validated = BLUEPRINT_EVENT_SCHEMA(config.get('data'))
         except vol.Invalid as ex:
             LOGGER.error(format_schema_error(hass, ex, f"{DOMAIN} {CONF_BLUEPRINTS}({config.get('id')})", config))
             continue

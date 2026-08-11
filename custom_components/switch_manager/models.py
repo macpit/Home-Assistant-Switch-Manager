@@ -1,8 +1,11 @@
 import time
 import re
 from .const import DOMAIN, LOGGER
-from .helpers import format_mqtt_message, get_val_from_str
+from .helpers import format_mqtt_message, format_state_event, get_val_from_str
 from homeassistant.core import HomeAssistant, Context, callback
+from homeassistant.const import EVENT_STATE_CHANGED
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.script import Script, async_validate_actions_config
 from homeassistant.helpers.condition import async_template as template_condition
 from homeassistant.helpers.template import Template
@@ -28,24 +31,68 @@ def convert_conditions( hass: HomeAssistant, conditions ):
         return Template(conditions, hass)
     return conditions
 
-async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _callback ):
+def _resolve_state_entities( hass: HomeAssistant, blueprint, identifier ):
+    """Resolve the concrete entity_ids a state-entity switch should listen to.
+
+    ``identifier`` is normally a Home Assistant device id (e.g. a Matter remote),
+    in which case we return all of the device's entities in the blueprint's
+    ``state_domain``. An entity_id may also be given directly for a single-entity
+    switch.
+    """
+    if not identifier:
+        return []
+    if '.' in identifier:
+        return [identifier]
+    ent_reg = er.async_get(hass)
+    return [
+        entry.entity_id
+        for entry in er.async_entries_for_device(ent_reg, identifier, include_disabled_entities=False)
+        if entry.domain == blueprint.state_domain
+    ]
+
+async def create_event_listeners( hass: HomeAssistant, blueprint, identifier, _callback ):
     @callback
     def _handleMQTT( message: ReceiveMessage ):
         data = format_mqtt_message(message)
         _callback( data.copy(), Context() )
-    
+
     @callback
     def _handleEvent( event ):
         _callback( event.data.copy(), event.context )
 
+    @callback
+    def _handleState( event ):
+        data = format_state_event(hass, event, blueprint.state_domain)
+        if data is None:
+            return
+        _callback( data, event.context )
+
     listeners = []
     if blueprint.is_mqtt:
         try:
-            listeners.append( await mqtt_subscribe(hass, mqtt_topic, _handleMQTT) )
+            listeners.append( await mqtt_subscribe(hass, identifier, _handleMQTT) )
             if blueprint.mqtt_sub_topics:
-                listeners.append( await mqtt_subscribe(hass, f"{mqtt_topic}/#", _handleMQTT) )
+                listeners.append( await mqtt_subscribe(hass, f"{identifier}/#", _handleMQTT) )
         except HomeAssistantError:
             LOGGER.error(f"Unable to handle switch as MQTT is not loaded")
+    elif blueprint.is_state:
+        if identifier:
+            # Config path: scope the subscription to just this device's entities.
+            # Never fall back to a global listener here - the per-event identifier
+            # check is skipped for state switches, so a global listen would turn an
+            # unresolved device into a catch-all for every event.* entity.
+            entity_ids = _resolve_state_entities(hass, blueprint, identifier)
+            if entity_ids:
+                listeners.append( async_track_state_change_event(hass, entity_ids, _handleState) )
+            else:
+                LOGGER.warning(
+                    f"No '{blueprint.state_domain}' entities found for identifier "
+                    f"'{identifier}'; switch will not receive events until reloaded"
+                )
+        else:
+            # Discovery path (no identifier): listen broadly and filter by domain
+            # in the handler so any matching device can be discovered.
+            listeners.append( hass.bus.async_listen(EVENT_STATE_CHANGED, _handleState) )
     else:
         listeners.append( hass.bus.async_listen(blueprint.event_type, _handleEvent) )
     return listeners
@@ -61,6 +108,8 @@ class Blueprint:
         self.service = config.get('service')
         self.event_type = config.get('event_type')
         self.is_mqtt = self.event_type == 'mqtt'
+        self.is_state = self.event_type == 'state_changed'
+        self.state_domain = config.get('state_domain', 'event')
         self.mqtt_topic_format = config.get('mqtt_topic_format', None)
         self.mqtt_sub_topics = config.get('mqtt_sub_topics', False)
         self.identifier_key = config.get('identifier_key')
@@ -453,10 +502,13 @@ class ManagedSwitchConfig:
         self.enabled = value
 
     def _check_conditons( self, data ) -> bool:
-        if not self.blueprint.is_mqtt:
+        # State-entity switches are already scoped to this device's entities at
+        # subscription time, so no per-event identifier comparison is needed
+        # (and the identifier is a device id, not present verbatim in the event).
+        if not self.blueprint.is_mqtt and not self.blueprint.is_state:
             if str(data.get(self.blueprint.identifier_key)) != str(self.identifier):
                 return False
-        
+
         self.notify('incoming', { 'data': data })
         return self.blueprint.check_conditions( data )
 

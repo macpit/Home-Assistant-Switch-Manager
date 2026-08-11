@@ -47,6 +47,14 @@ BLUEPRINT_MQTT_SCHEMA = BLUEPRINT_SCHEMA.extend({
     vol.Optional('mqtt_topic_format'): cv.string,
     vol.Optional('mqtt_sub_topics', default=False): cv.boolean
 })
+# State-entity based blueprints (e.g. Matter remotes, which surface as `event.*`
+# entities rather than firing a dedicated bus event like `zha_event`). The switch
+# is identified by its Home Assistant device id and its buttons are separated by
+# the entity/Matter endpoint. `state_domain` restricts which entity domain we
+# listen to (default `event`).
+BLUEPRINT_STATE_SCHEMA = BLUEPRINT_EVENT_SCHEMA.extend({
+    vol.Optional('state_domain', default='event'): cv.string
+})
 def _normalize_config_action(value):
     """Normalize raw HA action dicts into {mode, sequence} wrapper."""
     if isinstance(value, dict) and 'sequence' not in value and ('action' in value or 'service' in value):

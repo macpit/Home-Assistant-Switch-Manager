@@ -1,0 +1,64 @@
+name: IKEA BILRESA Scroll Wheel (Matter)
+service: Matter
+event_type: state_changed
+identifier_key: device_id
+state_domain: event
+info: >-
+  IKEA BILRESA scroll-wheel remote over Matter. Home Assistant exposes the
+  remote's generic-switch endpoints as separate event.* entities (e.g.
+  event.bilresa_scroll_wheel_taste_1 ... _9). Set this switch's identifier to the
+  remote's DEVICE - use auto-discovery and interact with the remote once, or paste
+  the Home Assistant device id.
+
+
+  Each action below matches one Matter endpoint. Inside an action's sequence the
+  triggering event is available as template data:
+    - {{ data.event_type }} -> multi_press_1 ... multi_press_8, and (if supported)
+      initial_press / short_release / long_press / long_release
+    - {{ data.totalNumberOfPressesCounted }} -> notch count while scrolling
+      (batched, capped at 8), useful for scaling brightness/volume
+    - {{ data.entity_id }} and {{ data.endpoint }} -> the source entity/endpoint
+
+
+  The endpoint-to-gesture mapping (scroll up/down, press, mode) differs per unit.
+  Open the switch monitor and interact with the remote to see which endpoint and
+  event_type each gesture produces, then fill in the matching actions. If the
+  endpoint numbers below do not match your device, match on entity_id instead.
+buttons:
+  - actions:
+      - title: Endpoint 1
+        conditions:
+          - key: endpoint
+            value: "1"
+      - title: Endpoint 2
+        conditions:
+          - key: endpoint
+            value: "2"
+      - title: Endpoint 3
+        conditions:
+          - key: endpoint
+            value: "3"
+      - title: Endpoint 4
+        conditions:
+          - key: endpoint
+            value: "4"
+      - title: Endpoint 5
+        conditions:
+          - key: endpoint
+            value: "5"
+      - title: Endpoint 6
+        conditions:
+          - key: endpoint
+            value: "6"
+      - title: Endpoint 7
+        conditions:
+          - key: endpoint
+            value: "7"
+      - title: Endpoint 8
+        conditions:
+          - key: endpoint
+            value: "8"
+      - title: Endpoint 9
+        conditions:
+          - key: endpoint
+            value: "9"
