@@ -12,7 +12,14 @@ BLUEPRINT_ACTION_SCHEMA = vol.Schema({
     # Name of a numeric field in the event data whose value is used as a repeat
     # count for this action's sequence (e.g. 'presses' so a scroll of N notches
     # runs the user's action N times). Omitted = run once.
-    vol.Optional('repeat'): cv.string
+    vol.Optional('repeat'): cv.string,
+    # Service-data field name(s) whose numeric value is multiplied by the event's
+    # notch count (data.presses) before running the action ONCE. Lets a scroll of N
+    # notches dim by (step * N) in a single, race-free call while the user's action
+    # stays a plain, template-free step (e.g. brightness_step_pct: 5). Alternative
+    # to `repeat` (use `repeat` for discrete actions, `scale_field` for relative
+    # values like brightness).
+    vol.Optional('scale_field'): vol.Any(cv.string, [cv.string])
 })
 SHAPE_CIRCLE_SCHEMA = vol.Schema({
     vol.Required('x'): cv.positive_int,

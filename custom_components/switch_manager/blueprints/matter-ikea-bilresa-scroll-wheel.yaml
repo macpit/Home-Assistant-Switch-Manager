@@ -19,11 +19,13 @@ info: >-
   interact with the remote once, or paste the Home Assistant device id.
 
 
-  Rotate: just define a single step (e.g. brightness -5%). Fast scrolling is
-  batched by Matter into one event covering several notches; the rotate actions
-  automatically repeat your step once per notch, so no templates are needed.
-  (Very fast turns may still be dropped by Matter below Home Assistant - that loss
-  cannot be recovered at this layer.)
+  Rotate: just define a single light.turn_on step with a brightness_step_pct
+  (e.g. +5 for right, -5 for left) - no templates. Fast scrolling is batched by
+  Matter into one event covering several notches; the rotate actions scale your
+  brightness_step_pct by the notch count and run it once, so a quick flick dims by
+  the full amount in a single smooth call. Tip: set these rotate actions' Mode to
+  'queued' so slow scrolling (many small events) isn't dropped either. (Very fast
+  turns may still be dropped by Matter below Home Assistant - not recoverable here.)
 
 
   Endpoint numbering follows the common BILRESA layout (per LED: rotate right, then
@@ -47,10 +49,10 @@ buttons:
         conditions: "{{ data.endpoint == '3' and data.event_type == 'long_release' }}"
       - title: rotate right
         conditions: "{{ data.endpoint == '1' }}"
-        repeat: presses
+        scale_field: brightness_step_pct
       - title: rotate left
         conditions: "{{ data.endpoint == '2' }}"
-        repeat: presses
+        scale_field: brightness_step_pct
   # LED 2  (endpoints: rotate right = 4, rotate left = 5, press = 6)
   - x: 210
     y: 465
@@ -67,10 +69,10 @@ buttons:
         conditions: "{{ data.endpoint == '6' and data.event_type == 'long_release' }}"
       - title: rotate right
         conditions: "{{ data.endpoint == '4' }}"
-        repeat: presses
+        scale_field: brightness_step_pct
       - title: rotate left
         conditions: "{{ data.endpoint == '5' }}"
-        repeat: presses
+        scale_field: brightness_step_pct
   # LED 3  (endpoints: rotate right = 7, rotate left = 8, press = 9)
   - x: 260
     y: 465
@@ -87,7 +89,7 @@ buttons:
         conditions: "{{ data.endpoint == '9' and data.event_type == 'long_release' }}"
       - title: rotate right
         conditions: "{{ data.endpoint == '7' }}"
-        repeat: presses
+        scale_field: brightness_step_pct
       - title: rotate left
         conditions: "{{ data.endpoint == '8' }}"
-        repeat: presses
+        scale_field: brightness_step_pct

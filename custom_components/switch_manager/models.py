@@ -1,5 +1,6 @@
 import time
 import re
+import copy
 from .const import DOMAIN, LOGGER
 from .helpers import format_mqtt_message, format_state_event, get_val_from_str
 from homeassistant.core import HomeAssistant, Context, callback
@@ -30,6 +31,46 @@ def convert_conditions( hass: HomeAssistant, conditions ):
     if isinstance(conditions, str):
         return Template(conditions, hass)
     return conditions
+
+def _scale_number( value, factor ):
+    """Multiply a numeric (or numeric-string) value by factor, preserving type.
+    Templates and non-numeric values are returned unchanged."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return type(value)(value * factor)
+    if isinstance(value, str):
+        s = value.strip()
+        if '{{' in s or '{%' in s:
+            return value
+        try:
+            return str(int(s) * factor) if '.' not in s else str(float(s) * factor)
+        except ValueError:
+            return value
+    return value
+
+def scale_sequence_fields( sequence, fields, factor ):
+    """Deep-copy a script sequence and multiply the given service-data field(s) by
+    factor wherever they appear under a step's `data`/`service_data`. Lets a
+    blueprint scale e.g. brightness_step_pct by the scroll notch count so the user's
+    action stays a single, template-free step."""
+    seq = copy.deepcopy(sequence)
+
+    def walk( node ):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ('data', 'service_data') and isinstance(value, dict):
+                    for field in fields:
+                        if field in value:
+                            value[field] = _scale_number(value[field], factor)
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(seq)
+    return seq
 
 def _resolve_state_entities( hass: HomeAssistant, blueprint, identifier ):
     """Resolve the concrete entity_ids a state-entity switch should listen to.
@@ -219,6 +260,8 @@ class BlueprintButtonAction:
         self._hass = hass
         self.title = config.get('title')
         self.repeat = config.get('repeat')
+        scale_field = config.get('scale_field')
+        self.scale_field = [scale_field] if isinstance(scale_field, str) else (scale_field or None)
         self.conditions = convert_conditions( hass, config.get('conditions', []) )
         self.index = index
 
@@ -259,23 +302,40 @@ class ManagedSwitchConfigButtonAction:
     def _check_conditions( self, data ) -> bool:
         return self.blueprint.check_conditions( data )
 
+    async def _make_script( self, sequence ):
+        validated = await async_validate_actions_config(
+            self._hass, cv.SCRIPT_SCHEMA(sequence)
+        )
+        return Script(
+                hass=self._hass,
+                sequence=validated,
+                name=f"{DOMAIN}_{self.switch_id}_{self.button_index}_{self.index}",
+                domain=DOMAIN,
+                logger=LOGGER,
+                script_mode=self.mode
+            )
+
     async def init_script( self ):
         if self.active:
-            sequence = await async_validate_actions_config(
-                self._hass, cv.SCRIPT_SCHEMA(self.sequence)
-            )
-            self.script = Script(
-                    hass=self._hass, 
-                    sequence=sequence,
-                    name=f"{DOMAIN}_{self.switch_id}_{self.button_index}_{self.index}",
-                    domain=DOMAIN,
-                    logger=LOGGER,
-                    script_mode=self.mode
-                )
-            
-    async def run( self, data, context, repeat=1 ):
+            self.script = await self._make_script( self.sequence )
+
+    async def run( self, data, context, repeat=1, scale=None ):
         if not self.script:
             LOGGER.debug(f'No sequence assigned for switch:{self.switch_id} button:{self.button_index} action:{self.index}')
+            return
+
+        # scale = (fields, factor): run ONCE with the named service-data field(s)
+        # multiplied, so a fast scroll dims by (step * notches) in a single race-free
+        # call instead of many relative steps. Built on the fly from the raw sequence.
+        if scale and scale[1] != 1:
+            fields, factor = scale
+            try:
+                script = await self._make_script( scale_sequence_fields(self.sequence, fields, factor) )
+            except Exception as err:
+                LOGGER.error(f"switch:{self.switch_id} could not build scaled sequence, running unscaled: {err}")
+                script = self.script
+            LOGGER.debug(f"Running scaled sequence (x{factor}) for switch:{self.switch_id} button:{self.button_index} action:{self.index}")
+            await script.async_run( run_variables=data, context=context )
             return
 
         # Run sequentially so repeated steps (e.g. per scroll notch) apply in order
@@ -459,17 +519,25 @@ class ManagedSwitchConfig:
                     action_index += 1
                     if not action._check_conditions( data ):
                         continue
-                    # A blueprint action may repeat its sequence by a numeric event
-                    # field (e.g. 'presses' -> once per scroll notch). This keeps the
-                    # user's action clean: they define one step, we run it N times.
+                    # A blueprint action may either scale a numeric service-data
+                    # field by the notch count (one race-free call) or repeat its
+                    # whole sequence N times. Either way the user's action stays a
+                    # single, template-free step.
                     repeat_count = 1
-                    if action.blueprint.repeat:
+                    scale = None
+                    if action.blueprint.scale_field:
+                        try:
+                            factor = int(data.get('presses', 1))
+                        except (TypeError, ValueError):
+                            factor = 1
+                        scale = (action.blueprint.scale_field, min(max(1, factor), 50))
+                    elif action.blueprint.repeat:
                         try:
                             repeat_count = int(data.get(action.blueprint.repeat, 1))
                         except (TypeError, ValueError):
                             repeat_count = 1
                         repeat_count = min(max(1, repeat_count), 50)
-                    self._hass.async_create_task( action.run( data={ "data": data }, context=context, repeat=repeat_count ) )
+                    self._hass.async_create_task( action.run( data={ "data": data }, context=context, repeat=repeat_count, scale=scale ) )
                     self.button_last_state[button_index] = {
                         "action": action_index,
                         "title": action.blueprint.title,
