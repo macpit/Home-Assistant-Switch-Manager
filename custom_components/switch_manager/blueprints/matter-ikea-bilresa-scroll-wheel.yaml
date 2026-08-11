@@ -37,18 +37,18 @@ buttons:
     width: 24
     conditions: "{{ data.endpoint in ['1','2','3'] }}"
     actions:
-      - title: Press
+      - title: press
         conditions: "{{ data.endpoint == '3' and data.event_type == 'multi_press_1' }}"
-      - title: Press 2x
+      - title: press 2x
         conditions: "{{ data.endpoint == '3' and data.event_type == 'multi_press_2' }}"
-      - title: Hold
+      - title: hold
         conditions: "{{ data.endpoint == '3' and data.event_type == 'long_press' }}"
-      - title: Hold (released)
+      - title: hold (released)
         conditions: "{{ data.endpoint == '3' and data.event_type == 'long_release' }}"
-      - title: Rotate right
+      - title: rotate right
         conditions: "{{ data.endpoint == '1' }}"
         repeat: presses
-      - title: Rotate left
+      - title: rotate left
         conditions: "{{ data.endpoint == '2' }}"
         repeat: presses
   # LED 2  (endpoints: rotate right = 4, rotate left = 5, press = 6)
@@ -57,18 +57,18 @@ buttons:
     width: 24
     conditions: "{{ data.endpoint in ['4','5','6'] }}"
     actions:
-      - title: Press
+      - title: press
         conditions: "{{ data.endpoint == '6' and data.event_type == 'multi_press_1' }}"
-      - title: Press 2x
+      - title: press 2x
         conditions: "{{ data.endpoint == '6' and data.event_type == 'multi_press_2' }}"
-      - title: Hold
+      - title: hold
         conditions: "{{ data.endpoint == '6' and data.event_type == 'long_press' }}"
-      - title: Hold (released)
+      - title: hold (released)
         conditions: "{{ data.endpoint == '6' and data.event_type == 'long_release' }}"
-      - title: Rotate right
+      - title: rotate right
         conditions: "{{ data.endpoint == '4' }}"
         repeat: presses
-      - title: Rotate left
+      - title: rotate left
         conditions: "{{ data.endpoint == '5' }}"
         repeat: presses
   # LED 3  (endpoints: rotate right = 7, rotate left = 8, press = 9)
@@ -77,17 +77,17 @@ buttons:
     width: 24
     conditions: "{{ data.endpoint in ['7','8','9'] }}"
     actions:
-      - title: Press
+      - title: press
         conditions: "{{ data.endpoint == '9' and data.event_type == 'multi_press_1' }}"
-      - title: Press 2x
+      - title: press 2x
         conditions: "{{ data.endpoint == '9' and data.event_type == 'multi_press_2' }}"
-      - title: Hold
+      - title: hold
         conditions: "{{ data.endpoint == '9' and data.event_type == 'long_press' }}"
-      - title: Hold (released)
+      - title: hold (released)
         conditions: "{{ data.endpoint == '9' and data.event_type == 'long_release' }}"
-      - title: Rotate right
+      - title: rotate right
         conditions: "{{ data.endpoint == '7' }}"
         repeat: presses
-      - title: Rotate left
+      - title: rotate left
         conditions: "{{ data.endpoint == '8' }}"
         repeat: presses
