@@ -146,6 +146,15 @@ def format_state_event( hass: HomeAssistant, event: Event, domain: str = 'event'
     if event_type is None:
         return None
 
+    # Derive the notch/press count so sequences can react proportionally. Matter
+    # batches fast scrolling into a single `multi_press_N` (N = notches, capped at
+    # 8), so a rotate sequence can e.g. `repeat: count: {{ data.presses }}`.
+    presses = 1
+    if isinstance(event_type, str) and event_type.startswith('multi_press_'):
+        tail = event_type.rsplit('_', 1)[-1]
+        if tail.isdigit():
+            presses = int(tail)
+
     entry = er.async_get(hass).async_get(entity_id)
 
     data = {
@@ -153,6 +162,7 @@ def format_state_event( hass: HomeAssistant, event: Event, domain: str = 'event'
         'device_id': entry.device_id if entry else None,
         'endpoint': matter_endpoint_from_unique_id(entry.unique_id) if entry else None,
         'event_type': event_type,
+        'presses': presses,
         'state': new_state.state,
     }
     # Expose the remaining entity attributes for advanced conditions without

@@ -19,10 +19,19 @@ info: >-
   interact with the remote once, or paste the Home Assistant device id.
 
 
-  Rotate actions fire once per turn with the notch count in
-  {{ data.totalNumberOfPressesCounted }} (batched, capped at 8) - use it to scale
-  brightness/volume. Also available: {{ data.event_type }}, {{ data.endpoint }},
-  {{ data.entity_id }}.
+  Fast scrolling is batched by Matter into a single event with the notch count in
+  {{ data.presses }} (1..8). To react proportionally, wrap your rotate sequence in
+  a repeat, e.g.
+    - repeat:
+        count: "{{ data.presses }}"
+        sequence:
+          - action: light.turn_on
+            target: { entity_id: light.example }
+            data: { brightness_step_pct: 5 }
+  or scale in one step with brightness_step_pct: "{{ data.presses * 5 }}".
+  Note: with very fast turns Matter sometimes drops the event entirely - that loss
+  happens below Home Assistant and cannot be recovered here. Also available:
+  {{ data.event_type }}, {{ data.endpoint }}, {{ data.entity_id }}.
 
 
   Endpoint numbering follows the common BILRESA layout (per LED: rotate right, then
