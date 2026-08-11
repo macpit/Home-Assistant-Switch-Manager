@@ -34,9 +34,9 @@ info: >-
   conditions below.
 buttons:
   # LED 1  (endpoints: rotate right = 1, rotate left = 2, press = 3)
-  - x: 160
-    y: 465
-    width: 24
+  - x: 124
+    y: 336
+    width: 10
     conditions: "{{ data.endpoint in ['1','2','3'] }}"
     actions:
       - title: press
@@ -54,9 +54,9 @@ buttons:
         conditions: "{{ data.endpoint == '2' }}"
         scale_field: brightness_step_pct
   # LED 2  (endpoints: rotate right = 4, rotate left = 5, press = 6)
-  - x: 210
-    y: 465
-    width: 24
+  - x: 148
+    y: 336
+    width: 10
     conditions: "{{ data.endpoint in ['4','5','6'] }}"
     actions:
       - title: press
@@ -74,9 +74,9 @@ buttons:
         conditions: "{{ data.endpoint == '5' }}"
         scale_field: brightness_step_pct
   # LED 3  (endpoints: rotate right = 7, rotate left = 8, press = 9)
-  - x: 260
-    y: 465
-    width: 24
+  - x: 173
+    y: 336
+    width: 10
     conditions: "{{ data.endpoint in ['7','8','9'] }}"
     actions:
       - title: press
