@@ -11,54 +11,111 @@ info: >-
   the Home Assistant device id.
 
 
-  Each action below matches one Matter endpoint. Inside an action's sequence the
-  triggering event is available as template data:
+  The nine buttons below map to the nine Matter endpoints. The endpoint-to-gesture
+  mapping (scroll up/down, press, mode) differs per unit, so the buttons are laid
+  out as a neutral 3x3 grid. Open the switch monitor and interact with the remote
+  to see which endpoint each gesture triggers, then assign your actions.
+
+
+  Inside an action's sequence the triggering event is available as template data:
     - {{ data.event_type }} -> multi_press_1 ... multi_press_8, and (if supported)
-      initial_press / short_release / long_press / long_release
+      long_press / long_release
     - {{ data.totalNumberOfPressesCounted }} -> notch count while scrolling
       (batched, capped at 8), useful for scaling brightness/volume
     - {{ data.entity_id }} and {{ data.endpoint }} -> the source entity/endpoint
 
 
-  The endpoint-to-gesture mapping (scroll up/down, press, mode) differs per unit.
-  Open the switch monitor and interact with the remote to see which endpoint and
-  event_type each gesture produces, then fill in the matching actions. If the
-  endpoint numbers below do not match your device, match on entity_id instead.
+  If the endpoint numbers do not match your device, match on entity_id instead.
 buttons:
-  - actions:
-      - title: Endpoint 1
+  - x: 12
+    y: 12
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "1"
+    actions: &endpoint_actions
+      - title: press
         conditions:
-          - key: endpoint
-            value: "1"
-      - title: Endpoint 2
+          - key: event_type
+            value: multi_press_1
+      - title: press 2x
         conditions:
-          - key: endpoint
-            value: "2"
-      - title: Endpoint 3
+          - key: event_type
+            value: multi_press_2
+      - title: press 3x
         conditions:
-          - key: endpoint
-            value: "3"
-      - title: Endpoint 4
+          - key: event_type
+            value: multi_press_3
+      - title: hold
         conditions:
-          - key: endpoint
-            value: "4"
-      - title: Endpoint 5
+          - key: event_type
+            value: long_press
+      - title: hold (released)
         conditions:
-          - key: endpoint
-            value: "5"
-      - title: Endpoint 6
-        conditions:
-          - key: endpoint
-            value: "6"
-      - title: Endpoint 7
-        conditions:
-          - key: endpoint
-            value: "7"
-      - title: Endpoint 8
-        conditions:
-          - key: endpoint
-            value: "8"
-      - title: Endpoint 9
-        conditions:
-          - key: endpoint
-            value: "9"
+          - key: event_type
+            value: long_release
+  - x: 164
+    y: 12
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "2"
+    actions: *endpoint_actions
+  - x: 316
+    y: 12
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "3"
+    actions: *endpoint_actions
+  - x: 12
+    y: 240
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "4"
+    actions: *endpoint_actions
+  - x: 164
+    y: 240
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "5"
+    actions: *endpoint_actions
+  - x: 316
+    y: 240
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "6"
+    actions: *endpoint_actions
+  - x: 12
+    y: 468
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "7"
+    actions: *endpoint_actions
+  - x: 164
+    y: 468
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "8"
+    actions: *endpoint_actions
+  - x: 316
+    y: 468
+    width: 144
+    height: 220
+    conditions:
+      - key: endpoint
+        value: "9"
+    actions: *endpoint_actions
