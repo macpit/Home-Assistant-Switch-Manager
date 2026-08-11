@@ -8,7 +8,11 @@ CONDITION_SCHEMA = vol.Schema({
 })
 BLUEPRINT_ACTION_SCHEMA = vol.Schema({
     vol.Required('title'): cv.string,
-    vol.Optional('conditions', default=[]): vol.Any(cv.string, [CONDITION_SCHEMA])
+    vol.Optional('conditions', default=[]): vol.Any(cv.string, [CONDITION_SCHEMA]),
+    # Name of a numeric field in the event data whose value is used as a repeat
+    # count for this action's sequence (e.g. 'presses' so a scroll of N notches
+    # runs the user's action N times). Omitted = run once.
+    vol.Optional('repeat'): cv.string
 })
 SHAPE_CIRCLE_SCHEMA = vol.Schema({
     vol.Required('x'): cv.positive_int,

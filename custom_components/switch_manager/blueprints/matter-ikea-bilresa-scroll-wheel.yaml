@@ -19,19 +19,11 @@ info: >-
   interact with the remote once, or paste the Home Assistant device id.
 
 
-  Fast scrolling is batched by Matter into a single event with the notch count in
-  {{ data.presses }} (1..8). To react proportionally, wrap your rotate sequence in
-  a repeat, e.g.
-    - repeat:
-        count: "{{ data.presses }}"
-        sequence:
-          - action: light.turn_on
-            target: { entity_id: light.example }
-            data: { brightness_step_pct: 5 }
-  or scale in one step with brightness_step_pct: "{{ data.presses * 5 }}".
-  Note: with very fast turns Matter sometimes drops the event entirely - that loss
-  happens below Home Assistant and cannot be recovered here. Also available:
-  {{ data.event_type }}, {{ data.endpoint }}, {{ data.entity_id }}.
+  Rotate: just define a single step (e.g. brightness -5%). Fast scrolling is
+  batched by Matter into one event covering several notches; the rotate actions
+  automatically repeat your step once per notch, so no templates are needed.
+  (Very fast turns may still be dropped by Matter below Home Assistant - that loss
+  cannot be recovered at this layer.)
 
 
   Endpoint numbering follows the common BILRESA layout (per LED: rotate right, then
@@ -55,8 +47,10 @@ buttons:
         conditions: "{{ data.endpoint == '3' and data.event_type == 'long_release' }}"
       - title: Rotate right
         conditions: "{{ data.endpoint == '1' }}"
+        repeat: presses
       - title: Rotate left
         conditions: "{{ data.endpoint == '2' }}"
+        repeat: presses
   # LED 2  (endpoints: rotate right = 4, rotate left = 5, press = 6)
   - x: 210
     y: 465
@@ -73,8 +67,10 @@ buttons:
         conditions: "{{ data.endpoint == '6' and data.event_type == 'long_release' }}"
       - title: Rotate right
         conditions: "{{ data.endpoint == '4' }}"
+        repeat: presses
       - title: Rotate left
         conditions: "{{ data.endpoint == '5' }}"
+        repeat: presses
   # LED 3  (endpoints: rotate right = 7, rotate left = 8, press = 9)
   - x: 260
     y: 465
@@ -91,5 +87,7 @@ buttons:
         conditions: "{{ data.endpoint == '9' and data.event_type == 'long_release' }}"
       - title: Rotate right
         conditions: "{{ data.endpoint == '7' }}"
+        repeat: presses
       - title: Rotate left
         conditions: "{{ data.endpoint == '8' }}"
+        repeat: presses

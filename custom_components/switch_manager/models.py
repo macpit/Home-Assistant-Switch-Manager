@@ -218,6 +218,7 @@ class BlueprintButtonAction:
     def __init__(self, hass, config: dict, index):
         self._hass = hass
         self.title = config.get('title')
+        self.repeat = config.get('repeat')
         self.conditions = convert_conditions( hass, config.get('conditions', []) )
         self.index = index
 
@@ -272,13 +273,16 @@ class ManagedSwitchConfigButtonAction:
                     script_mode=self.mode
                 )
             
-    async def run( self, data, context ):
+    async def run( self, data, context, repeat=1 ):
         if not self.script:
             LOGGER.debug(f'No sequence assigned for switch:{self.switch_id} button:{self.button_index} action:{self.index}')
             return
-        
-        LOGGER.debug(f"Running sequence for switch:{self.switch_id} button:{self.button_index} action:{self.index} ")
-        self._hass.async_create_task( self.script.async_run( run_variables=data, context=context) )
+
+        # Run sequentially so repeated steps (e.g. per scroll notch) apply in order
+        # rather than racing. repeat is already clamped by the caller.
+        for _ in range(max(1, repeat)):
+            LOGGER.debug(f"Running sequence for switch:{self.switch_id} button:{self.button_index} action:{self.index} ")
+            await self.script.async_run( run_variables=data, context=context )
 
     # home assistant json
     def as_dict(self):
@@ -455,7 +459,17 @@ class ManagedSwitchConfig:
                     action_index += 1
                     if not action._check_conditions( data ):
                         continue
-                    self._hass.async_create_task( action.run( data={ "data": data }, context=context ) )
+                    # A blueprint action may repeat its sequence by a numeric event
+                    # field (e.g. 'presses' -> once per scroll notch). This keeps the
+                    # user's action clean: they define one step, we run it N times.
+                    repeat_count = 1
+                    if action.blueprint.repeat:
+                        try:
+                            repeat_count = int(data.get(action.blueprint.repeat, 1))
+                        except (TypeError, ValueError):
+                            repeat_count = 1
+                        repeat_count = min(max(1, repeat_count), 50)
+                    self._hass.async_create_task( action.run( data={ "data": data }, context=context, repeat=repeat_count ) )
                     self.button_last_state[button_index] = {
                         "action": action_index,
                         "title": action.blueprint.title,
