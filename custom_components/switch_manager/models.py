@@ -1,8 +1,12 @@
 import time
 import re
+import copy
 from .const import DOMAIN, LOGGER
-from .helpers import format_mqtt_message, get_val_from_str
+from .helpers import format_mqtt_message, format_state_event, get_val_from_str
 from homeassistant.core import HomeAssistant, Context, callback
+from homeassistant.const import EVENT_STATE_CHANGED
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.script import Script, async_validate_actions_config
 from homeassistant.helpers.condition import async_template as template_condition
 from homeassistant.helpers.template import Template
@@ -28,24 +32,108 @@ def convert_conditions( hass: HomeAssistant, conditions ):
         return Template(conditions, hass)
     return conditions
 
-async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _callback ):
+def _scale_number( value, factor ):
+    """Multiply a numeric (or numeric-string) value by factor, preserving type.
+    Templates and non-numeric values are returned unchanged."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return type(value)(value * factor)
+    if isinstance(value, str):
+        s = value.strip()
+        if '{{' in s or '{%' in s:
+            return value
+        try:
+            return str(int(s) * factor) if '.' not in s else str(float(s) * factor)
+        except ValueError:
+            return value
+    return value
+
+def scale_sequence_fields( sequence, fields, factor ):
+    """Deep-copy a script sequence and multiply the given service-data field(s) by
+    factor wherever they appear under a step's `data`/`service_data`. Lets a
+    blueprint scale e.g. brightness_step_pct by the scroll notch count so the user's
+    action stays a single, template-free step."""
+    seq = copy.deepcopy(sequence)
+
+    def walk( node ):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ('data', 'service_data') and isinstance(value, dict):
+                    for field in fields:
+                        if field in value:
+                            value[field] = _scale_number(value[field], factor)
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(seq)
+    return seq
+
+def _resolve_state_entities( hass: HomeAssistant, blueprint, identifier ):
+    """Resolve the concrete entity_ids a state-entity switch should listen to.
+
+    ``identifier`` is normally a Home Assistant device id (e.g. a Matter remote),
+    in which case we return all of the device's entities in the blueprint's
+    ``state_domain``. An entity_id may also be given directly for a single-entity
+    switch.
+    """
+    if not identifier:
+        return []
+    if '.' in identifier:
+        return [identifier]
+    ent_reg = er.async_get(hass)
+    return [
+        entry.entity_id
+        for entry in er.async_entries_for_device(ent_reg, identifier, include_disabled_entities=False)
+        if entry.domain == blueprint.state_domain
+    ]
+
+async def create_event_listeners( hass: HomeAssistant, blueprint, identifier, _callback ):
     @callback
     def _handleMQTT( message: ReceiveMessage ):
         data = format_mqtt_message(message)
         _callback( data.copy(), Context() )
-    
+
     @callback
     def _handleEvent( event ):
         _callback( event.data.copy(), event.context )
 
+    @callback
+    def _handleState( event ):
+        data = format_state_event(hass, event, blueprint.state_domain)
+        if data is None:
+            return
+        _callback( data, event.context )
+
     listeners = []
     if blueprint.is_mqtt:
         try:
-            listeners.append( await mqtt_subscribe(hass, mqtt_topic, _handleMQTT) )
+            listeners.append( await mqtt_subscribe(hass, identifier, _handleMQTT) )
             if blueprint.mqtt_sub_topics:
-                listeners.append( await mqtt_subscribe(hass, f"{mqtt_topic}/#", _handleMQTT) )
+                listeners.append( await mqtt_subscribe(hass, f"{identifier}/#", _handleMQTT) )
         except HomeAssistantError:
             LOGGER.error(f"Unable to handle switch as MQTT is not loaded")
+    elif blueprint.is_state:
+        if identifier:
+            # Config path: scope the subscription to just this device's entities.
+            # Never fall back to a global listener here - the per-event identifier
+            # check is skipped for state switches, so a global listen would turn an
+            # unresolved device into a catch-all for every event.* entity.
+            entity_ids = _resolve_state_entities(hass, blueprint, identifier)
+            if entity_ids:
+                listeners.append( async_track_state_change_event(hass, entity_ids, _handleState) )
+            else:
+                LOGGER.warning(
+                    f"No '{blueprint.state_domain}' entities found for identifier "
+                    f"'{identifier}'; switch will not receive events until reloaded"
+                )
+        else:
+            # Discovery path (no identifier): listen broadly and filter by domain
+            # in the handler so any matching device can be discovered.
+            listeners.append( hass.bus.async_listen(EVENT_STATE_CHANGED, _handleState) )
     else:
         listeners.append( hass.bus.async_listen(blueprint.event_type, _handleEvent) )
     return listeners
@@ -61,6 +149,8 @@ class Blueprint:
         self.service = config.get('service')
         self.event_type = config.get('event_type')
         self.is_mqtt = self.event_type == 'mqtt'
+        self.is_state = self.event_type == 'state_changed'
+        self.state_domain = config.get('state_domain', 'event')
         self.mqtt_topic_format = config.get('mqtt_topic_format', None)
         self.mqtt_sub_topics = config.get('mqtt_sub_topics', False)
         self.identifier_key = config.get('identifier_key')
@@ -169,6 +259,9 @@ class BlueprintButtonAction:
     def __init__(self, hass, config: dict, index):
         self._hass = hass
         self.title = config.get('title')
+        self.repeat = config.get('repeat')
+        scale_field = config.get('scale_field')
+        self.scale_field = [scale_field] if isinstance(scale_field, str) else (scale_field or None)
         self.conditions = convert_conditions( hass, config.get('conditions', []) )
         self.index = index
 
@@ -209,27 +302,47 @@ class ManagedSwitchConfigButtonAction:
     def _check_conditions( self, data ) -> bool:
         return self.blueprint.check_conditions( data )
 
+    async def _make_script( self, sequence ):
+        validated = await async_validate_actions_config(
+            self._hass, cv.SCRIPT_SCHEMA(sequence)
+        )
+        return Script(
+                hass=self._hass,
+                sequence=validated,
+                name=f"{DOMAIN}_{self.switch_id}_{self.button_index}_{self.index}",
+                domain=DOMAIN,
+                logger=LOGGER,
+                script_mode=self.mode
+            )
+
     async def init_script( self ):
         if self.active:
-            sequence = await async_validate_actions_config(
-                self._hass, cv.SCRIPT_SCHEMA(self.sequence)
-            )
-            self.script = Script(
-                    hass=self._hass, 
-                    sequence=sequence,
-                    name=f"{DOMAIN}_{self.switch_id}_{self.button_index}_{self.index}",
-                    domain=DOMAIN,
-                    logger=LOGGER,
-                    script_mode=self.mode
-                )
-            
-    async def run( self, data, context ):
+            self.script = await self._make_script( self.sequence )
+
+    async def run( self, data, context, repeat=1, scale=None ):
         if not self.script:
             LOGGER.debug(f'No sequence assigned for switch:{self.switch_id} button:{self.button_index} action:{self.index}')
             return
-        
-        LOGGER.debug(f"Running sequence for switch:{self.switch_id} button:{self.button_index} action:{self.index} ")
-        self._hass.async_create_task( self.script.async_run( run_variables=data, context=context) )
+
+        # scale = (fields, factor): run ONCE with the named service-data field(s)
+        # multiplied, so a fast scroll dims by (step * notches) in a single race-free
+        # call instead of many relative steps. Built on the fly from the raw sequence.
+        if scale and scale[1] != 1:
+            fields, factor = scale
+            try:
+                script = await self._make_script( scale_sequence_fields(self.sequence, fields, factor) )
+            except Exception as err:
+                LOGGER.error(f"switch:{self.switch_id} could not build scaled sequence, running unscaled: {err}")
+                script = self.script
+            LOGGER.debug(f"Running scaled sequence (x{factor}) for switch:{self.switch_id} button:{self.button_index} action:{self.index}")
+            await script.async_run( run_variables=data, context=context )
+            return
+
+        # Run sequentially so repeated steps (e.g. per scroll notch) apply in order
+        # rather than racing. repeat is already clamped by the caller.
+        for _ in range(max(1, repeat)):
+            LOGGER.debug(f"Running sequence for switch:{self.switch_id} button:{self.button_index} action:{self.index} ")
+            await self.script.async_run( run_variables=data, context=context )
 
     # home assistant json
     def as_dict(self):
@@ -406,7 +519,25 @@ class ManagedSwitchConfig:
                     action_index += 1
                     if not action._check_conditions( data ):
                         continue
-                    self._hass.async_create_task( action.run( data={ "data": data }, context=context ) )
+                    # A blueprint action may either scale a numeric service-data
+                    # field by the notch count (one race-free call) or repeat its
+                    # whole sequence N times. Either way the user's action stays a
+                    # single, template-free step.
+                    repeat_count = 1
+                    scale = None
+                    if action.blueprint.scale_field:
+                        try:
+                            factor = int(data.get('presses', 1))
+                        except (TypeError, ValueError):
+                            factor = 1
+                        scale = (action.blueprint.scale_field, min(max(1, factor), 50))
+                    elif action.blueprint.repeat:
+                        try:
+                            repeat_count = int(data.get(action.blueprint.repeat, 1))
+                        except (TypeError, ValueError):
+                            repeat_count = 1
+                        repeat_count = min(max(1, repeat_count), 50)
+                    self._hass.async_create_task( action.run( data={ "data": data }, context=context, repeat=repeat_count, scale=scale ) )
                     self.button_last_state[button_index] = {
                         "action": action_index,
                         "title": action.blueprint.title,
@@ -453,10 +584,13 @@ class ManagedSwitchConfig:
         self.enabled = value
 
     def _check_conditons( self, data ) -> bool:
-        if not self.blueprint.is_mqtt:
+        # State-entity switches are already scoped to this device's entities at
+        # subscription time, so no per-event identifier comparison is needed
+        # (and the identifier is a device id, not present verbatim in the event).
+        if not self.blueprint.is_mqtt and not self.blueprint.is_state:
             if str(data.get(self.blueprint.identifier_key)) != str(self.identifier):
                 return False
-        
+
         self.notify('incoming', { 'data': data })
         return self.blueprint.check_conditions( data )
 

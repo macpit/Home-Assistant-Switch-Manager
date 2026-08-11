@@ -1,6 +1,7 @@
 """Helpers for switch_manager integration."""
 import json, pathlib, os, shutil, enum
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, Event
+from homeassistant.helpers import entity_registry as er
 from annotatedyaml.loader import load_yaml
 from .const import (
     LOGGER, 
@@ -99,6 +100,75 @@ def format_mqtt_message( message: ReceiveMessage):
         'topic': message.topic,
         'topic_basename': message.topic.split('/')[-1]
     })
+    return data
+
+def matter_endpoint_from_unique_id( unique_id ):
+    """Extract the Matter endpoint id from a Home Assistant Matter entity unique_id.
+
+    HA builds Matter unique_ids as
+    ``{fabric}-{node}-MatterNodeDevice-{endpoint}-{key}-{cluster}-{attribute}``
+    (non-bridged devices). The endpoint is the token right after the
+    ``-MatterNodeDevice-`` anchor. Returned as a string so it compares directly
+    against blueprint condition values. Returns None if the format doesn't match
+    (e.g. bridged devices or non-Matter entities), in which case blueprints can
+    fall back to matching on ``entity_id``.
+    """
+    if not unique_id:
+        return None
+    marker = '-MatterNodeDevice-'
+    idx = unique_id.find(marker)
+    if idx == -1:
+        return None
+    token = unique_id[idx + len(marker):].split('-', 1)[0]
+    return token if token.isdigit() else None
+
+def format_state_event( hass: HomeAssistant, event: Event, domain: str = 'event' ):
+    """Flatten a ``state_changed`` event for a state-entity switch into a data dict.
+
+    Used for connection types (e.g. Matter) where a button press surfaces as a
+    state change on an ``event.*`` entity rather than a dedicated bus event. The
+    actual action lives in ``new_state.attributes.event_type``. Returns None for
+    state changes that aren't a real, actionable trigger (wrong domain, entity
+    added/removed, no event_type) so callers can simply skip them.
+    """
+    entity_id = event.data.get('entity_id')
+    if not entity_id or entity_id.split('.', 1)[0] != domain:
+        return None
+
+    new_state = event.data.get('new_state')
+    old_state = event.data.get('old_state')
+    # Ignore entity add/restore (no previous state) to avoid firing on restart,
+    # and removals (no new state).
+    if new_state is None or old_state is None:
+        return None
+
+    event_type = new_state.attributes.get('event_type')
+    if event_type is None:
+        return None
+
+    # Derive the notch/press count so sequences can react proportionally. Matter
+    # batches fast scrolling into a single `multi_press_N` (N = notches, capped at
+    # 8), so a rotate sequence can e.g. `repeat: count: {{ data.presses }}`.
+    presses = 1
+    if isinstance(event_type, str) and event_type.startswith('multi_press_'):
+        tail = event_type.rsplit('_', 1)[-1]
+        if tail.isdigit():
+            presses = int(tail)
+
+    entry = er.async_get(hass).async_get(entity_id)
+
+    data = {
+        'entity_id': entity_id,
+        'device_id': entry.device_id if entry else None,
+        'endpoint': matter_endpoint_from_unique_id(entry.unique_id) if entry else None,
+        'event_type': event_type,
+        'presses': presses,
+        'state': new_state.state,
+    }
+    # Expose the remaining entity attributes for advanced conditions without
+    # letting them clobber the derived keys above.
+    for key, value in new_state.attributes.items():
+        data.setdefault(key, value)
     return data
 
 def get_val_from_str(_string, _dict):

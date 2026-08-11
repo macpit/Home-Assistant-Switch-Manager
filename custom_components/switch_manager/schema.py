@@ -8,7 +8,18 @@ CONDITION_SCHEMA = vol.Schema({
 })
 BLUEPRINT_ACTION_SCHEMA = vol.Schema({
     vol.Required('title'): cv.string,
-    vol.Optional('conditions', default=[]): vol.Any(cv.string, [CONDITION_SCHEMA])
+    vol.Optional('conditions', default=[]): vol.Any(cv.string, [CONDITION_SCHEMA]),
+    # Name of a numeric field in the event data whose value is used as a repeat
+    # count for this action's sequence (e.g. 'presses' so a scroll of N notches
+    # runs the user's action N times). Omitted = run once.
+    vol.Optional('repeat'): cv.string,
+    # Service-data field name(s) whose numeric value is multiplied by the event's
+    # notch count (data.presses) before running the action ONCE. Lets a scroll of N
+    # notches dim by (step * N) in a single, race-free call while the user's action
+    # stays a plain, template-free step (e.g. brightness_step_pct: 5). Alternative
+    # to `repeat` (use `repeat` for discrete actions, `scale_field` for relative
+    # values like brightness).
+    vol.Optional('scale_field'): vol.Any(cv.string, [cv.string])
 })
 SHAPE_CIRCLE_SCHEMA = vol.Schema({
     vol.Required('x'): cv.positive_int,
@@ -46,6 +57,14 @@ BLUEPRINT_EVENT_SCHEMA = BLUEPRINT_SCHEMA.extend({
 BLUEPRINT_MQTT_SCHEMA = BLUEPRINT_SCHEMA.extend({
     vol.Optional('mqtt_topic_format'): cv.string,
     vol.Optional('mqtt_sub_topics', default=False): cv.boolean
+})
+# State-entity based blueprints (e.g. Matter remotes, which surface as `event.*`
+# entities rather than firing a dedicated bus event like `zha_event`). The switch
+# is identified by its Home Assistant device id and its buttons are separated by
+# the entity/Matter endpoint. `state_domain` restricts which entity domain we
+# listen to (default `event`).
+BLUEPRINT_STATE_SCHEMA = BLUEPRINT_EVENT_SCHEMA.extend({
+    vol.Optional('state_domain', default='event'): cv.string
 })
 def _normalize_config_action(value):
     """Normalize raw HA action dicts into {mode, sequence} wrapper."""
