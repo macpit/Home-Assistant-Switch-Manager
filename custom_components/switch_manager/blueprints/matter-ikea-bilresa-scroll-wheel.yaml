@@ -4,118 +4,116 @@ event_type: state_changed
 identifier_key: device_id
 state_domain: event
 info: >-
-  IKEA BILRESA scroll-wheel remote over Matter. Home Assistant exposes the
-  remote's generic-switch endpoints as separate event.* entities (e.g.
-  event.bilresa_scroll_wheel_taste_1 ... _9). Set this switch's identifier to the
-  remote's DEVICE - use auto-discovery and interact with the remote once, or paste
-  the Home Assistant device id.
+  IKEA BILRESA scroll-wheel remote over Matter. The lower part of the remote has
+  three LEDs that select one of three targets/modes (pressing it only cycles the
+  LED and produces NO Home Assistant event). Per mode the wheel offers the same
+  three gestures, giving nine Matter generic-switch endpoints. Home Assistant
+  exposes each endpoint as a separate event.* entity.
 
 
-  The nine buttons below map to the nine Matter endpoints. The endpoint-to-gesture
-  mapping (scroll up/down, press, mode) differs per unit, so the buttons are laid
-  out as a neutral 3x3 grid. Open the switch monitor and interact with the remote
-  to see which endpoint each gesture triggers, then assign your actions.
+  The buttons are arranged as a control matrix: rows = LED 1/2/3, columns = scroll
+  left / press / scroll right. Each cell is one endpoint (EP1..EP9).
 
 
-  Inside an action's sequence the triggering event is available as template data:
-    - {{ data.event_type }} -> multi_press_1 ... multi_press_8, and (if supported)
-      long_press / long_release
-    - {{ data.totalNumberOfPressesCounted }} -> notch count while scrolling
-      (batched, capped at 8), useful for scaling brightness/volume
-    - {{ data.entity_id }} and {{ data.endpoint }} -> the source entity/endpoint
+  Set this switch's identifier to the remote's DEVICE - use auto-discovery and
+  interact with the remote once, or paste the Home Assistant device id.
 
 
-  If the endpoint numbers do not match your device, match on entity_id instead.
+  Scroll cells fire once per turn with the notch count in
+  {{ data.totalNumberOfPressesCounted }} (batched, capped at 8) - use it to scale
+  brightness/volume. Also available: {{ data.event_type }}, {{ data.endpoint }},
+  {{ data.entity_id }}.
+
+
+  The endpoint-to-gesture numbering is the common BILRESA layout; if your unit
+  differs, open the monitor, interact with the remote to see which endpoint fires,
+  and adjust the endpoint values (or match on entity_id instead).
 buttons:
-  - x: 12
-    y: 12
-    width: 144
-    height: 220
-    conditions:
-      - key: endpoint
-        value: "1"
-    actions: &endpoint_actions
-      - title: press
-        conditions:
-          - key: event_type
-            value: multi_press_1
-      - title: press 2x
-        conditions:
-          - key: event_type
-            value: multi_press_2
-      - title: press 3x
-        conditions:
-          - key: event_type
-            value: multi_press_3
-      - title: hold
-        conditions:
-          - key: event_type
-            value: long_press
-      - title: hold (released)
-        conditions:
-          - key: event_type
-            value: long_release
-  - x: 164
-    y: 12
-    width: 144
-    height: 220
+  # ---- Row: LED 1 ----
+  - x: 520
+    y: 120
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
         value: "2"
-    actions: *endpoint_actions
-  - x: 316
-    y: 12
-    width: 144
-    height: 220
+    actions: &scroll_actions
+      - title: Scroll
+  - x: 644
+    y: 120
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
         value: "3"
-    actions: *endpoint_actions
-  - x: 12
-    y: 240
-    width: 144
-    height: 220
+    actions: &press_actions
+      - title: Press
+        conditions:
+          - key: event_type
+            value: multi_press_1
+      - title: Hold
+        conditions:
+          - key: event_type
+            value: long_press
+      - title: Hold (released)
+        conditions:
+          - key: event_type
+            value: long_release
+  - x: 768
+    y: 120
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
-        value: "4"
-    actions: *endpoint_actions
-  - x: 164
-    y: 240
-    width: 144
-    height: 220
+        value: "1"
+    actions: *scroll_actions
+  # ---- Row: LED 2 ----
+  - x: 520
+    y: 306
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
         value: "5"
-    actions: *endpoint_actions
-  - x: 316
-    y: 240
-    width: 144
-    height: 220
+    actions: *scroll_actions
+  - x: 644
+    y: 306
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
         value: "6"
-    actions: *endpoint_actions
-  - x: 12
-    y: 468
-    width: 144
-    height: 220
+    actions: *press_actions
+  - x: 768
+    y: 306
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
-        value: "7"
-    actions: *endpoint_actions
-  - x: 164
-    y: 468
-    width: 144
-    height: 220
+        value: "4"
+    actions: *scroll_actions
+  # ---- Row: LED 3 ----
+  - x: 520
+    y: 492
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
         value: "8"
-    actions: *endpoint_actions
-  - x: 316
-    y: 468
-    width: 144
-    height: 220
+    actions: *scroll_actions
+  - x: 644
+    y: 492
+    width: 110
+    height: 170
     conditions:
       - key: endpoint
         value: "9"
-    actions: *endpoint_actions
+    actions: *press_actions
+  - x: 768
+    y: 492
+    width: 110
+    height: 170
+    conditions:
+      - key: endpoint
+        value: "7"
+    actions: *scroll_actions
