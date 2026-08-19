@@ -589,16 +589,25 @@ export class SwitchManagerSwitchEditor extends LitElement {
   private _fixMismatch() {
     if (!this.config) return;
     this.hass
-      .callWS({
+      .callWS<SaveConfigResponse>({
         type: wsType("config/save"),
         config: { ...this.config, blueprint: (this.config.blueprint as any).id },
         fix_mismatch: true,
       })
-      .then(() => {
+      .then((res) => {
+        // The backend reshapes the buttons to the blueprint, so adopt the config it
+        // returns instead of keeping the mismatched one around - otherwise the editor
+        // stays blank and the error comes back on the next load.
         this._errors = undefined;
-        this.config!.is_mismatch = false;
-        this.requestUpdate();
+        this._block_save = false;
+        this.button_index = 0;
+        this.action_index = 0;
+        this._setConfig(res.config);
         showToast(this, "Mismatch Fixed");
+      })
+      .catch((err) => {
+        this._errors = err.message;
+        showToast(this, err.message);
       });
   }
 

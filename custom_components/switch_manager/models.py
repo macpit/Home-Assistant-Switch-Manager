@@ -3,7 +3,7 @@ import re
 from .const import DOMAIN, LOGGER
 from .helpers import format_mqtt_message, get_val_from_str
 from homeassistant.core import HomeAssistant, Context, callback
-from homeassistant.helpers.script import Script, async_validate_actions_config
+from homeassistant.helpers.script import Script, async_validate_actions_config, DEFAULT_SCRIPT_MODE
 from homeassistant.helpers.condition import async_template as template_condition
 from homeassistant.helpers.template import Template
 from homeassistant.components.mqtt.client import async_subscribe as mqtt_subscribe
@@ -286,6 +286,23 @@ class ManagedSwitchConfigButton:
     # attr dict
     def asdict(self):
         return self.as_dict()
+
+def reconcile_buttons_with_blueprint( blueprint, buttons_config ) -> list:
+    """Reshape a switch config so its buttons line up with the blueprint again.
+
+    Sequences are matched by index, buttons and actions the blueprint gained are added
+    empty and the ones it no longer defines are dropped. This is what the editors "Fix"
+    button ends up calling after an update changed the shape of a blueprint.
+    """
+    buttons = []
+    for index, blueprint_button in enumerate(blueprint.buttons):
+        button = dict(buttons_config[index]) if index < len(buttons_config) else {}
+        actions = list(button.get('actions') or [])[:len(blueprint_button.actions)]
+        while len(actions) < len(blueprint_button.actions):
+            actions.append({ 'mode': DEFAULT_SCRIPT_MODE, 'sequence': [] })
+        button['actions'] = actions
+        buttons.append(button)
+    return buttons
 
 class ManagedSwitchConfig:
 

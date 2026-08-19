@@ -13,7 +13,7 @@ from homeassistant.helpers.script import Script
 from .schema import SWITCH_MANAGER_CONFIG_SCHEMA
 from .helpers import _get_blueprint, _get_switch_config, _remove_switch_config, _set_switch_config
 from .const import DOMAIN, CONF_BLUEPRINTS, CONF_MANAGED_SWITCHES, CONF_STORE
-from .models import ManagedSwitchConfig
+from .models import ManagedSwitchConfig, reconcile_buttons_with_blueprint
 
 async def async_setup_connections( hass ):
   
@@ -117,7 +117,21 @@ async def async_setup_connections( hass ):
         if msg['config'].get('id'):
             config = _get_switch_config( hass, msg['config'].get('id') )
             if msg['fix_mismatch']:
-                config.setBlueprint( config.blueprint, msg['config'].get('buttons') )
+                if not config.valid_blueprint:
+                    connection.send_error( 
+                        msg['id'], 
+                        'blueprint_not_loaded', 
+                        f"Blueprint {config.blueprint} is not loaded, check the logs" 
+                    )
+                    return
+                # The panel sends the config as it is stored, so the buttons still carry
+                # the layout of the blueprint they were created with. Reshaping them here
+                # keeps the fix working no matter which panel version asked for it.
+                msg['config']['buttons'] = reconcile_buttons_with_blueprint( 
+                    config.blueprint, 
+                    msg['config'].get('buttons') 
+                )
+                config.setBlueprint( config.blueprint, msg['config']['buttons'] )
                 ir.async_delete_issue(hass, DOMAIN, f"switch_{config.id}_mismatch")
             config.update( msg['config'] )
             await config.start()
