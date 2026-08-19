@@ -287,6 +287,19 @@ class ManagedSwitchConfigButton:
     def asdict(self):
         return self.as_dict()
 
+def blueprint_only_grew( blueprint, buttons_config ) -> bool:
+    """Did the blueprint only gain buttons/actions compared to what is configured?
+
+    Everything already configured then still sits at the same position, so filling in
+    the new buttons and actions can never move a sequence onto a different action.
+    """
+    if len(buttons_config) > len(blueprint.buttons):
+        return False
+    return all(
+        len(button.get('actions') or []) <= len(blueprint.buttons[index].actions)
+        for index, button in enumerate(buttons_config)
+    )
+
 def reconcile_buttons_with_blueprint( blueprint, buttons_config ) -> list:
     """Reshape a switch config so its buttons line up with the blueprint again.
 
@@ -323,8 +336,7 @@ class ManagedSwitchConfig:
         self.buttons: list[ManagedSwitchConfigButton] = []
         self.enabled: bool = config.get('enabled', True)
         self.button_last_state: list = []
-        self.setBlueprint( blueprint, config.get('buttons') )
-        self.buildButtons( config.get('buttons') )
+        self.buildButtons( self.setBlueprint( blueprint, config.get('buttons') ) )
 
         self.listeners = []
 
@@ -344,18 +356,29 @@ class ManagedSwitchConfig:
 
         if not self.valid_blueprint:
             self._setError(f"Blueprint {self.blueprint} for {self.name} not loaded, check logs")
-            return
+            return buttons_config
 
-        if buttons_config:
-            if len(buttons_config) != len(self.blueprint.buttons):
-                self._setError(f"Blueprint {self.blueprint.id} mismatch for buttons on {self.name}")
+        if not buttons_config:
+            return buttons_config
+
+        if blueprint_only_grew( self.blueprint, buttons_config ):
+            # An update that only adds buttons or actions to a blueprint can be lined up
+            # again without touching anything the user configured, so do that instead of
+            # asking them to press "Fix" on every switch using it.
+            return reconcile_buttons_with_blueprint( self.blueprint, buttons_config )
+
+        if len(buttons_config) != len(self.blueprint.buttons):
+            self._setError(f"Blueprint {self.blueprint.id} mismatch for buttons on {self.name}")
+            self.is_mismatch = True
+            return buttons_config
+
+        for i in range(len(buttons_config)):
+            if len(buttons_config[i].get('actions')) != len(self.blueprint.buttons[i].actions):
+                self._setError(f"Blueprint {self.blueprint.id} mismatch for actions on {self.name}")
                 self.is_mismatch = True
-                return
-            for i in range(len(buttons_config)):
-                if len(buttons_config[i].get('actions')) != len(self.blueprint.buttons[i].actions):
-                    self._setError(f"Blueprint {self.blueprint.id} mismatch for actions on {self.name}")
-                    self.is_mismatch = True
-                    return
+                return buttons_config
+
+        return buttons_config
 
     def mergeVariables( self, data ):
         if not self.variables:
