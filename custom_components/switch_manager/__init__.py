@@ -11,7 +11,7 @@ from .const import (
 )
 from .store import SwitchManagerStore
 from .helpers import load_blueprints, VERSION, deploy_blueprints, check_blueprints_folder_exists, _get_blueprint, _get_switch_config, _set_switch_config
-from .view import async_setup_view, async_bind_blueprint_images
+from .view import async_setup_view, async_remove_view, async_bind_blueprint_images
 from . import models
 from .schema import BLUEPRINT_MQTT_SCHEMA, BLUEPRINT_EVENT_SCHEMA, SERVICE_SET_VARIABLES_SCHEMA
 from .connections import async_setup_connections
@@ -75,6 +75,8 @@ async def async_setup_entry( hass, config_entry ):
 
 async def async_unload_entry( hass: HomeAssistant, config_entry ):
     """Unload a config entry."""
+    # Leaving the panel behind makes the next setup fail with "Overwriting panel"
+    async_remove_view( hass )
     for switch_id in hass.data[DOMAIN].get(CONF_MANAGED_SWITCHES, {}):
         hass.data[DOMAIN][CONF_MANAGED_SWITCHES][switch_id].unload()
     return True
