@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, state, query } from "lit/decorators.js";
 import "../switch-manager-dialog";
 
 @customElement("switch-manager-dialog-variables-editor")
@@ -7,11 +7,19 @@ export class SwitchManagerDialogVariablesEditor extends LitElement {
   @state() private _params?: any;
   @state() private _variables: Record<string, unknown> = {};
 
+  @query("ha-yaml-editor") private _yamlEditor?: HTMLElement & {
+    setValue: (v: unknown) => void;
+  };
+
   public showDialog(params: any) {
     this._params = params;
     this._variables = JSON.parse(
       JSON.stringify(params.config?.variables || {})
     );
+    // ha-yaml-editor only picks up `value` on its own when auto-update is set, and the
+    // dialog element is reused for every switch, so push the variables in by hand each
+    // time it opens - otherwise the box stays empty (#57).
+    this.updateComplete.then(() => this._yamlEditor?.setValue(this._variables));
   }
 
   public closeDialog() {
@@ -25,7 +33,7 @@ export class SwitchManagerDialogVariablesEditor extends LitElement {
       <switch-manager-dialog @closed=${this.closeDialog} heading="Variables">
         <div class="content">
           <ha-yaml-editor
-            .value=${this._variables}
+            .defaultValue=${this._variables}
             @value-changed=${(e: CustomEvent) =>
               (this._variables = e.detail.value)}
           ></ha-yaml-editor>
