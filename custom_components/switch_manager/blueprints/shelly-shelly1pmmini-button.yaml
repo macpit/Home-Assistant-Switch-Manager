@@ -1,4 +1,6 @@
-name: Shelly 1pm mini Gen3 (button)
+name: Shelly 1 mini / 1pm mini Gen3 (button)
+info: Also covers the Shelly 1 Mini Gen3, which sends the same events as the 1PM Mini -
+  the only difference between the two is the power meter.
 service: Shelly
 event_type: shelly.click
 identifier_key: device_id
