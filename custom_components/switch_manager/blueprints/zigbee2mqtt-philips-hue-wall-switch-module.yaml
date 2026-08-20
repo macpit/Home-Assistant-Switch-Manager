@@ -2,7 +2,11 @@ name: Philips Hue Wall Switch Module
 service: Zigbee2MQTT
 event_type: mqtt
 mqtt_topic_format: zigbee2mqtt/+/action
-info: Actions HOLD and HOLD (RELEASED) will only work in rocker mode.
+info: >-
+  Actions HOLD and HOLD (RELEASED) will only work in rocker mode. The second (right)
+  button only sends anything when the module's device_mode is set to dual_rocker or
+  dual_push_button in Zigbee2MQTT - in the single_* modes the device reports every
+  press as the left channel.
 buttons:
   - x: 112
     y: 140
@@ -21,6 +25,10 @@ buttons:
         conditions:
           - key: payload
             value: left_hold
+      - title: hold (released)
+        conditions:
+          - key: payload
+            value: left_hold_release
 
   - x: 112
     y: 270
@@ -39,3 +47,7 @@ buttons:
         conditions:
           - key: payload
             value: right_hold
+      - title: hold (released)
+        conditions:
+          - key: payload
+            value: right_hold_release
