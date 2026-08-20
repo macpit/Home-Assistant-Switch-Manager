@@ -413,7 +413,23 @@ buttons:
 
 #### Update broke my switch causing blueprint mismatch
 
-If by chance your switches are invalid because of a blueprint change, then this would generally mean a blueprint has added either more buttons or extra actions. We try to avoid this and as this integration is still in it's infancy stages there will be changes from time to time and while these changes happen, so does the rules in adding a blueprint to this repo (this should hopefully iron out these issues in the future).
+When a blueprint only *gains* buttons or actions, the switch is lined up with it automatically since v4.3.2 — everything you configured keeps its position and the new actions are simply added empty.
 
-To fix this, edit the switch then click **fix**. Once the switch has been updated to match the blueprint, you'll want to ensure your actions and sequences are in the right spots! This is by design to have you manually click fix as to ensure you're aware of the changes and how your buttons and actions have changed.
+You only see the mismatch error when a blueprint *dropped* buttons or actions, because sequences would be lost there and that is your call to make. Edit the switch and click **fix**, then check that your actions and sequences are still in the right spots.
+
+#### A Zigbee2MQTT switch is never discovered / does nothing
+
+Most Zigbee2MQTT blueprints listen on `zigbee2mqtt/<device>/action`. That topic is not published by Zigbee2MQTT itself — it is republished by its **Home Assistant integration**, so it only exists when in Zigbee2MQTT:
+
+* the Home Assistant integration is **enabled** (`homeassistant.enabled: true`), and
+* `advanced.output` is `json` (the default — with `attribute` the integration refuses to start), and
+* the device is a supported one, not defined as a custom/unknown device.
+
+You can check with any MQTT client (or the Zigbee2MQTT frontend) whether pressing the button publishes anything on `zigbee2mqtt/<device>/action`. If the device only publishes its state on `zigbee2mqtt/<device>`, none of the `/action` blueprints can ever match.
+
+The `legacy_action_sensor` option is unrelated to this topic even though toggling it has been reported to help — toggling it restarts Zigbee2MQTT, which is the more likely reason.
+
+#### The panel looks unchanged after an update
+
+Reload the Home Assistant page (Ctrl/Cmd+Shift+R). A browser tab that was open while the integration was updated keeps running the old panel code — the websocket reconnects on its own, the JavaScript does not.
 
