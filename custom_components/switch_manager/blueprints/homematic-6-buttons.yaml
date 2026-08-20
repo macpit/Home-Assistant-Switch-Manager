@@ -2,6 +2,9 @@ name: Homematic 6 Buttons
 service: Homematic
 event_type: homematic.keypress
 identifier_key: device_id
+info: >-
+  Hold matches press_long_start on Homematic IP devices and press_long on classic
+  BidCos-RF devices (HM-...), which never send press_long_start.
 buttons:
   - x: 85
     y: 85
@@ -16,9 +19,7 @@ buttons:
           - key: type
             value: press_short
       - title: hold
-        conditions:
-          - key: type
-            value: press_long_start
+        conditions: "{{ data.type == 'press_long_start' or (data.type == 'press_long' and 'HmIP' not in (data.model | default(data.device_type) | default('') | string)) }}"
   - x: 319
     y: 85
     width: 96
@@ -32,9 +33,7 @@ buttons:
           - key: type
             value: press_short
       - title: hold
-        conditions:
-          - key: type
-            value: press_long_start
+        conditions: "{{ data.type == 'press_long_start' or (data.type == 'press_long' and 'HmIP' not in (data.model | default(data.device_type) | default('') | string)) }}"
   - x: 85
     y: 194
     width: 96
@@ -48,9 +47,7 @@ buttons:
           - key: type
             value: press_short
       - title: hold
-        conditions:
-          - key: type
-            value: press_long_start
+        conditions: "{{ data.type == 'press_long_start' or (data.type == 'press_long' and 'HmIP' not in (data.model | default(data.device_type) | default('') | string)) }}"
   - x: 319
     y: 194
     width: 96
@@ -64,9 +61,7 @@ buttons:
           - key: type
             value: press_short
       - title: hold
-        conditions:
-          - key: type
-            value: press_long_start      
+        conditions: "{{ data.type == 'press_long_start' or (data.type == 'press_long' and 'HmIP' not in (data.model | default(data.device_type) | default('') | string)) }}"
   - x: 85
     y: 304
     width: 96
@@ -80,9 +75,7 @@ buttons:
           - key: type
             value: press_short
       - title: hold
-        conditions:
-          - key: type
-            value: press_long_start          
+        conditions: "{{ data.type == 'press_long_start' or (data.type == 'press_long' and 'HmIP' not in (data.model | default(data.device_type) | default('') | string)) }}"
   - x: 319
     y: 304
     width: 96
@@ -96,6 +89,4 @@ buttons:
           - key: type
             value: press_short
       - title: hold
-        conditions:
-          - key: type
-            value: press_long_start
+        conditions: "{{ data.type == 'press_long_start' or (data.type == 'press_long' and 'HmIP' not in (data.model | default(data.device_type) | default('') | string)) }}"
