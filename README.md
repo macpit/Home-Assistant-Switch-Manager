@@ -54,10 +54,18 @@ Switch manager is a centralised component to handle button pushes for your wirel
 
 [![YouTube Introduction](images/youtube-introduction.png)](https://www.youtube.com/watch?v=m2Rlobvo5cI)
 
-#### Switch editor page and index page
+#### Screenshots (v4.3)
+
+Switch list and switch editor — pick a button on the device image, then build a sequence per action (press / hold / …):
 <p float="left">
-  <img src="images/demo-2.png" width="49.5%" />
-  <img src="images/demo-3.png" width="49.5%" />
+  <img src="images/v4-switch-list.png" width="49.5%" />
+  <img src="images/v4-switch-editor.png" width="49.5%" />
+</p>
+
+Blueprint picker with protocol filter, and Home Assistant's native **Add action** dialog inside the editor:
+<p float="left">
+  <img src="images/v4-blueprint-picker.png" width="49.5%" />
+  <img src="images/v4-add-action.png" width="49.5%" />
 </p>
 
 
