@@ -46,13 +46,11 @@ Switch manager is a centralised component to handle button pushes for your wirel
 > The device sequence action is currently unsupported, use service/action calls instead as this should be used thoughout Home Assistant anyway. You can literally do everything device actions can do and more just by using the standard actions. You can read more on why you shoudn't use it [here](https://community.home-assistant.io/t/why-and-how-to-avoid-device-ids-in-automations-and-scripts/605517)
 
 
-#### Videos
+#### Video
 
-**Update 2026 (German)** — [Smart-Live](https://www.youtube.com/channel/UC9rJWdu8-jyyxo73DPevpKg) takes a look at this fork and what changed: [Home Assistant Switch Manager ist zurück! Fork rettet das beliebte Tool](https://www.youtube.com/watch?v=M_hLZacsjP4)
+[Smart-Live](https://www.youtube.com/channel/UC9rJWdu8-jyyxo73DPevpKg) takes a look at this fork and what changed (German):
 
-**Original introduction** by Sian-Lee-SA:
-
-[![YouTube Introduction](images/youtube-introduction.png)](https://www.youtube.com/watch?v=m2Rlobvo5cI)
+[![Home Assistant Switch Manager ist zurück! Fork rettet das beliebte Tool | Update 2026](images/youtube-smart-live.jpg)](https://www.youtube.com/watch?v=M_hLZacsjP4)
 
 #### Screenshots (v4.3)
 
@@ -80,7 +78,7 @@ Blueprint picker with protocol filter, and Home Assistant's native **Add action*
 3. Add `https://github.com/macpit/Home-Assistant-Switch-Manager` with category **Integration**
 4. Search for "Switch Manager" and click **Download**
 5. Restart Home Assistant
-6. Go to Config -> Integrations and add Switch Manager
+6. Go to Settings -> Devices & services -> Add integration and add Switch Manager
 
 ### Switching from the original repo
 
@@ -100,7 +98,7 @@ Your switch configurations are stored separately in `/homeassistant/.storage/swi
 1. Download the [latest release](https://github.com/macpit/Home-Assistant-Switch-Manager/releases)
 1. Place the folder `custom_components/switch_manager` into the `config/custom_components/` path of your Home Assistant installation
 1. Restart Home Assistant
-1. Go to Config -> Integrations and add Switch Manager
+1. Go to Settings -> Devices & services -> Add integration and add Switch Manager
 
 > [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=switch_manager)
 
@@ -126,7 +124,7 @@ If you do not know the event value then click the **Event Tool** link in the ide
 
 ##### Don't know MQTT topic
 
-If using a MQTT service then you can either download MQTT Explorer (preferred) or listen to all topics using the MQTT integration's listener. Click the **MQTT Tool** link in the identifier dialog or goto Configuration Menu -> Integrations -> MQTT -> Configure. Next listen to the topic `#` (which means all topics), after pressing a button you will see a topic representing this, this would be your MQTT topic for Switch Manager (you can cross reference the MQTT Discovery Topic and blueprint with the mqtt data if you want to be sure).
+If using a MQTT service then you can either download MQTT Explorer (preferred) or listen to all topics using the MQTT integration's listener. Click the **MQTT Tool** link in the identifier dialog or go to Settings -> Devices & services -> MQTT -> Configure. Next listen to the topic `#` (which means all topics), after pressing a button you will see a topic representing this, this would be your MQTT topic for Switch Manager (you can cross reference the MQTT Discovery Topic and blueprint with the mqtt data if you want to be sure).
 
 #### Interacting with buttons
 
@@ -144,9 +142,9 @@ You can assign variables to the switch from the top right menu, these variables 
 
 The event or MQTT data can also be accessed inside your sequences via the data variable.
 
-#### Service Set Switch Variables
+#### Action `switch_manager.set_variables`
 
-You can use the service `switch_manager.set_variables` to dynamically set variables for a switch. You need to supply the switch id which can be found on the identifier dialog, url or through debugging. Add new or replace variables through the code editor (yaml formatted). These variables will be reset on save, Home Assistant restart or Switch Manager reload so it's ideal to be used for temporary references. **Note: Set Variables will be saved if the switch has been saved after using the service call**
+You can use the action (service) `switch_manager.set_variables` to dynamically set variables for a switch. You need to supply the switch id which can be found on the identifier dialog, url or through debugging. Add new or replace variables through the code editor (yaml formatted). These variables will be reset on save, Home Assistant restart or Switch Manager reload so it's ideal to be used for temporary references. **Note: Set Variables will be saved if the switch has been saved after using the service call**
 
 If using the service within the switch itself, then you can just get the switch id by using `data.switch_id`.
 
@@ -211,7 +209,7 @@ File names should be defined as {service-name}-{switch-name-or-type}.yaml and al
 
 I tend to just google the device under the images tab. Next I will skim through til I find an image that has a flat perspective (top down) and is above 800px or 500px depending on the switches ratio. Next I will open the image in photoshop then mask out the background area with the shape tool. I then control click the layer to make only the visible selected which I then crop. Lastly I resize the image to be either 800px width or 500px height depending on which one has a greater value but I do not upscale if the image is below those sizes.
 
-Once a blueprint file or image file has been created or edited then you will need to either call the switch_manager.reload service or restart Home Assistant for the changes to take effect.
+Once a blueprint file or image file has been created or edited then you will need to either call the `switch_manager.reload` action or restart Home Assistant for the changes to take effect.
 
 #### Debug
 
