@@ -486,7 +486,10 @@ class ManagedSwitchConfig:
         for button in self.buttons:
             for action in button.actions:
                 if action.script:
-                    self._hass.async_create_task( action.script.async_unload() )
+                    # Script.async_unload() only exists from HA 2026.5 onwards; on older
+                    # cores dropping the reference is all the teardown there is.
+                    if hasattr( action.script, 'async_unload' ):
+                        self._hass.async_create_task( action.script.async_unload() )
                     action.script = None
                     
     def setEnabled( self, value: bool ):
