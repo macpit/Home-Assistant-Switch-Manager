@@ -4,17 +4,19 @@
 
 [![switch_manager_release](https://img.shields.io/github/v/release/macpit/Home-Assistant-Switch-Manager?style=flat-square&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager/releases/latest) [![switch_manager_stars](https://img.shields.io/github/stars/macpit/Home-Assistant-Switch-Manager?style=flat-square&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager/stargazers) [![switch_manager_contributors](https://img.shields.io/github/contributors/macpit/Home-Assistant-Switch-Manager?style=flat-square&color=41bdf5)](https://github.com/macpit/Home-Assistant-Switch-Manager)
 
-> **This is a maintained fork of [Sian-Lee-SA/Home-Assistant-Switch-Manager](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager)**, which appears to be abandoned.
+> **Switch Manager lives here now.** In August 2026 the original author, [@Sian-Lee-SA](https://github.com/Sian-Lee-SA), officially handed the project over to this repository and marked [the original repo](https://github.com/Sian-Lee-SA/Home-Assistant-Switch-Manager) as deprecated in favour of this one. Many thanks to Sian for the years of work that built Switch Manager in the first place — all development, releases, issues and pull requests now happen here.
 >
-> **What's new:**
-> - **v4 — frontend rebuilt on Home Assistant's *current* runtime components** instead of a frozen, bundled copy. This removes the long-standing drift problem and fixes the action editor on recent HA versions: the `input_select` **Option** dropdown opens again, **Targets** resolve entities/devices/areas/labels, and you get HA's modern **"Add action"** picker. Legacy UI chrome (menus, dialogs, tabs) was replaced with self-contained, drift-proof components.
-> - Backend updated for **Home Assistant 2026.x** (e.g. the `Script.async_unload()` deprecation).
-> - Lots of community switch blueprints integrated, plus duplicate-switch, sortable switch list, blueprint search, and test-firing actions from the editor.
+> **What's new since the hand-over (v4.x):**
+> - **Frontend rebuilt on Home Assistant's *current* runtime components** instead of a frozen, bundled copy. This removed the long-standing drift problem and fixed the action editor on recent HA versions: the `input_select` **Option** dropdown works again, **Targets** resolve entities/devices/areas/labels, and you get HA's modern **"Add action"** picker. Legacy UI chrome (menus, dialogs, tabs) was replaced with self-contained, drift-proof components.
+> - Backend kept current with **Home Assistant 2026.x** (up to and including 2026.8).
+> - **Auto-heal for blueprint updates** — when a blueprint only gains buttons or actions, your switches are lined up automatically, no more "blueprint mismatch" errors after an update.
+> - **Protocol filter** in the blueprint picker, blueprint search, sortable switch list, duplicate switch, and test-firing actions straight from the editor.
+> - **370+ device blueprints** — Zigbee2MQTT, ZHA, deCONZ, Z-Wave JS, Homematic, Shelly, Hue and more, with many community contributions merged.
 >
-> See the [releases](https://github.com/macpit/Home-Assistant-Switch-Manager/releases) for details.
+> See the [releases](https://github.com/macpit/Home-Assistant-Switch-Manager/releases) for the full changelog.
 
-> ### ⭐ Please star this repo
-> If Switch Manager is useful to you, please give it a **[star](https://github.com/macpit/Home-Assistant-Switch-Manager/stargazers)**. Since this is a maintained fork, more stars help other Home Assistant users find the actively-developed version instead of the abandoned original. It takes a second and means a lot — thank you! 🙏
+> ### ⭐ Thank you for 150+ stars!
+> If Switch Manager is useful to you, please give it a **[star](https://github.com/macpit/Home-Assistant-Switch-Manager/stargazers)** — it helps other Home Assistant users find the actively maintained version. 🙏
 
 ## Roadmap
 
@@ -22,13 +24,17 @@ We're looking for community input on what to build next! Vote by opening an [iss
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Blueprint Import via URL/YAML | Import community blueprints directly from a URL or paste YAML — no manual file copying | Planned |
-| Switch Cloning / Templates | Duplicate a switch from the list view three-dot menu. Creates a full copy with "(Copy)" suffix and empty identifier. ([#4](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/4): search & replace entity IDs planned as follow-up) | **v3.0.6** |
-| Backup / Export | Export and import switch configurations as YAML for migration or backup | Planned |
-| Action Testing in Editor | Test-fire actions directly from the editor without pressing the physical switch | **v3.0.7** |
-| Bulk Actions | Enable, disable or delete multiple switches at once | Idea |
-| Blueprint Community Store | A simple index of community blueprints installable with one click | Idea |
-| Visual Blueprint Editor | Create blueprints in the GUI instead of writing YAML by hand | Idea |
+| **Matter support** | Generic event-entity connection type so Matter remotes (IKEA BILRESA incl. scroll wheel, and others) can be used like any other switch ([#46](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/46), [#51](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/51), [PR #59](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/59)) | **Coming next** |
+| Visual Blueprint Editor | Create blueprints in the GUI instead of writing YAML by hand ([PR #39](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/39)) | In progress |
+| Action Test Buttons in switch config | Fire a single configured action from the switch view ([#50](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/50)) | Planned |
+| Switch Groups | Apply one configuration to several physical switches ([#45](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/45)) | Idea |
+| Blueprint Import via URL/YAML | Import community blueprints directly from a URL or paste YAML — no manual file copying | Idea |
+| Backup / Export | Export and import switch configurations as YAML for migration or backup | Idea |
+| Search & replace on clone | Replace device/entity IDs when duplicating a switch ([#4](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/4)) | Idea |
+| Blueprint auto-heal | Switches follow blueprints that gain buttons/actions automatically | **Done (v4.3.2)** |
+| Protocol filter in blueprint picker | Filter the blueprint list by Zigbee2MQTT, ZHA, deCONZ, … | **Done (v4.2.0)** |
+| Switch Cloning | Duplicate a switch from the list view three-dot menu | **Done (v3.0.6)** |
+| Action Testing in Editor | Test-fire actions directly from the editor without pressing the physical switch | **Done (v3.0.7)** |
 
 **Want something else?** [Open an issue](https://github.com/macpit/Home-Assistant-Switch-Manager/issues) and tell us!
 
@@ -40,7 +46,12 @@ Switch manager is a centralised component to handle button pushes for your wirel
 > The device sequence action is currently unsupported, use service/action calls instead as this should be used thoughout Home Assistant anyway. You can literally do everything device actions can do and more just by using the standard actions. You can read more on why you shoudn't use it [here](https://community.home-assistant.io/t/why-and-how-to-avoid-device-ids-in-automations-and-scripts/605517)
 
 
-#### Youtube demonstration
+#### Videos
+
+**Update 2026 (German)** — [Smart-Live](https://www.youtube.com/channel/UC9rJWdu8-jyyxo73DPevpKg) takes a look at this fork and what changed: [Home Assistant Switch Manager ist zurück! Fork rettet das beliebte Tool](https://www.youtube.com/watch?v=M_hLZacsjP4)
+
+**Original introduction** by Sian-Lee-SA:
+
 [![YouTube Introduction](images/youtube-introduction.png)](https://www.youtube.com/watch?v=m2Rlobvo5cI)
 
 #### Switch editor page and index page
