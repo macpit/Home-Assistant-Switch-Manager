@@ -46,6 +46,10 @@ Switch manager is a centralised component to handle button pushes for your wirel
 > The device sequence action is currently unsupported, use service/action calls instead as this should be used thoughout Home Assistant anyway. You can literally do everything device actions can do and more just by using the standard actions. You can read more on why you shoudn't use it [here](https://community.home-assistant.io/t/why-and-how-to-avoid-device-ids-in-automations-and-scripts/605517)
 
 
+#### Community
+
+Questions, feedback and blueprint requests: join the thread on the Home Assistant forum – [Switch Manager v5.0.0 with Matter support](https://community.home-assistant.io/t/maintained-fork-switch-manager-wireless-button-switch-action-manager-hacs-v5-0-0-with-matter-support/1022264).
+
 #### Video
 
 [Smart-Live](https://www.youtube.com/channel/UC9rJWdu8-jyyxo73DPevpKg) takes a look at this fork and what changed (German):
