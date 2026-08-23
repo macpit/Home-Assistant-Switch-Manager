@@ -140,7 +140,7 @@ def _scale_number( value, factor ):
 
 def scale_sequence_fields( sequence, fields, factor ):
     """Deep copy a script sequence and multiply the given service data field(s) by
-    factor wherever they appear under a steps `data` / `service_data`.
+    factor wherever they appear under a steps `data` / `service_data` / `event_data`.
 
     Lets a blueprint scale e.g. `brightness_step_pct` by the scroll notch count so
     the users action stays a single template free step."""
