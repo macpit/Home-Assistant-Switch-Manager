@@ -1,0 +1,52 @@
+name: IKEA BILRESA Dual Button (E2489)
+service: Matter
+event_type: event_entity
+identifier_key: device_id
+info: Identifier is the Home Assistant device id of the remote. Button 1 is the upper, button 2 the lower key. Short presses are reported only after the double-press timeout (about 1s).
+buttons:
+  - x: 243
+    y: 108
+    width: 58
+    conditions:
+      - key: entity_index
+        value: 0
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: multi_press_1
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: multi_press_2
+      - title: hold
+        conditions:
+          - key: event_type
+            value: long_press
+      - title: hold (released)
+        conditions:
+          - key: event_type
+            value: long_release
+  - x: 243
+    y: 378
+    width: 48
+    conditions:
+      - key: entity_index
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: multi_press_1
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: multi_press_2
+      - title: hold
+        conditions:
+          - key: event_type
+            value: long_press
+      - title: hold (released)
+        conditions:
+          - key: event_type
+            value: long_release

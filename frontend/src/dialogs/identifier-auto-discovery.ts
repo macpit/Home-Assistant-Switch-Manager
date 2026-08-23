@@ -8,7 +8,7 @@ import "../switch-manager-dialog";
 export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
   @state() private _params?: any;
   @state() private _identifier = "";
-  @state() private _discovered: string[] = [];
+  @state() private _discovered: { identifier: string; name?: string }[] = [];
   @state() private _listening = false;
   private _unsubscribe?: () => void;
   private hass!: HomeAssistant;
@@ -37,8 +37,14 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
     try {
       this._unsubscribe = await this.hass.connection.subscribeMessage(
         (msg: any) => {
-          if (msg.identifier && !this._discovered.includes(msg.identifier)) {
-            this._discovered = [...this._discovered, msg.identifier];
+          if (
+            msg.identifier &&
+            !this._discovered.some((d) => d.identifier === msg.identifier)
+          ) {
+            this._discovered = [
+              ...this._discovered,
+              { identifier: msg.identifier, name: msg.name },
+            ];
           }
         },
         {
@@ -74,7 +80,16 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
               (this._identifier = (e.target as HTMLInputElement).value)}
           />
 
-          ${this._params.blueprint?.mqtt_topic_format
+          ${this._params.blueprint?.event_type === "event_entity"
+            ? html`<div class="identifier-ref">
+                Identifier is the Home Assistant <b>device id</b> of the remote;
+                its <code>event.*</code> entities are used.
+                |
+                <a href="/config/devices/dashboard" target="_blank" rel="noreferrer"
+                  >Devices</a
+                >
+              </div>`
+            : this._params.blueprint?.mqtt_topic_format
             ? html`<div class="identifier-ref">
                 MQTT Discovery Topic:
                 <b>${this._params.blueprint.mqtt_topic_format}</b>
@@ -105,12 +120,15 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
                     ? html`
                         <div class="discovered-list">
                           ${this._discovered.map(
-                            (id) => html`
+                            (d) => html`
                               <div
                                 class="list-item"
-                                @click=${() => this._selectIdentifier(id)}
+                                @click=${() => this._selectIdentifier(d.identifier)}
                               >
-                                ${id}
+                                ${d.name
+                                  ? html`<b>${d.name}</b>
+                                      <span class="list-item-sub">${d.identifier}</span>`
+                                  : d.identifier}
                               </div>
                             `
                           )}
@@ -174,6 +192,12 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
       cursor: pointer;
       padding: 12px 8px;
       border-radius: 4px;
+    }
+    .list-item-sub {
+      display: block;
+      font-size: 0.8em;
+      color: var(--secondary-text-color);
+      word-break: break-all;
     }
     .list-item:hover {
       background: var(--secondary-background-color, rgba(127, 127, 127, 0.1));

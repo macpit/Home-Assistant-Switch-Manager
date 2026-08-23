@@ -2,7 +2,9 @@ import time
 import re
 from .const import DOMAIN, LOGGER
 from .helpers import format_mqtt_message, get_val_from_str
-from homeassistant.core import HomeAssistant, Context, callback
+from homeassistant.core import HomeAssistant, Context, callback, Event
+from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.helpers import entity_registry as er, device_registry as dr
 from homeassistant.helpers.script import Script, async_validate_actions_config, DEFAULT_SCRIPT_MODE
 from homeassistant.helpers.condition import async_template as template_condition
 from homeassistant.helpers.template import Template
@@ -28,6 +30,70 @@ def convert_conditions( hass: HomeAssistant, conditions ):
         return Template(conditions, hass)
     return conditions
 
+EVENT_ENTITY_DOMAIN = 'event'
+EVENT_TYPE_EVENT_ENTITY = 'event_entity'
+
+@callback
+def _is_event_entity_state_change( data ) -> bool:
+    return str(data.get('entity_id', '')).startswith(f"{EVENT_ENTITY_DOMAIN}.")
+
+def format_event_entity_state( hass: HomeAssistant, event: Event ) -> dict | None:
+    """Turn a state_changed event of an `event.*` entity into switch data.
+
+    Matter (and other integrations such as Hue or Zigbee2MQTT) do not fire bus
+    events for remotes; each button is an event entity whose state (a timestamp)
+    changes on every press while `attributes.event_type` says what happened.
+    Returns None for anything that is not a real button press (startup restore,
+    unavailable, ...).
+    """
+    new_state = event.data.get('new_state')
+    old_state = event.data.get('old_state')
+    if new_state is None or old_state is None:
+        return None
+    if new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN) or old_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+        return None
+    if new_state.attributes.get('event_type') is None:
+        return None
+
+    entity_registry = er.async_get(hass)
+    entry = entity_registry.async_get(new_state.entity_id)
+    device_id = entry.device_id if entry else None
+
+    # Matter remotes expose one event entity per button. Their unique ids carry the
+    # endpoint number, so ordering the devices event entities by unique id gives a
+    # stable button index that survives the user renaming the entities.
+    entity_index = 0
+    siblings = []
+    if device_id:
+        siblings = sorted(
+            (e for e in er.async_entries_for_device(entity_registry, device_id, include_disabled_entities=True)
+             if e.domain == EVENT_ENTITY_DOMAIN),
+            key=lambda e: str(e.unique_id)
+        )
+        entity_index = next((i for i, e in enumerate(siblings) if e.entity_id == new_state.entity_id), 0)
+
+    data = { k: v for k, v in new_state.attributes.items() if k != 'event_types' }
+    data.update({
+        'entity_id': new_state.entity_id,
+        'state': new_state.state,
+        'device_id': device_id,
+        'unique_id': entry.unique_id if entry else None,
+        'original_name': entry.original_name if entry else None,
+        'platform': entry.platform if entry else None,
+        'entity_index': entity_index,
+        'entity_count': len(siblings),
+        'attributes': dict(new_state.attributes),
+    })
+    return data
+
+def get_device_name( hass: HomeAssistant, device_id ) -> str | None:
+    if not device_id:
+        return None
+    device = dr.async_get(hass).async_get(device_id)
+    if not device:
+        return None
+    return device.name_by_user or device.name
+
 async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _callback ):
     @callback
     def _handleMQTT( message: ReceiveMessage ):
@@ -38,8 +104,18 @@ async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _c
     def _handleEvent( event ):
         _callback( event.data.copy(), event.context )
 
+    @callback
+    def _handleEntityEvent( event: Event ):
+        data = format_event_entity_state( hass, event )
+        if data is not None:
+            _callback( data, event.context )
+
     listeners = []
-    if blueprint.is_mqtt:
+    if blueprint.is_event_entity:
+        listeners.append( hass.bus.async_listen(
+            EVENT_STATE_CHANGED, _handleEntityEvent, event_filter=_is_event_entity_state_change
+        ) )
+    elif blueprint.is_mqtt:
         try:
             listeners.append( await mqtt_subscribe(hass, mqtt_topic, _handleMQTT) )
             if blueprint.mqtt_sub_topics:
@@ -61,6 +137,7 @@ class Blueprint:
         self.service = config.get('service')
         self.event_type = config.get('event_type')
         self.is_mqtt = self.event_type == 'mqtt'
+        self.is_event_entity = self.event_type == EVENT_TYPE_EVENT_ENTITY
         self.mqtt_topic_format = config.get('mqtt_topic_format', None)
         self.mqtt_sub_topics = config.get('mqtt_sub_topics', False)
         self.identifier_key = config.get('identifier_key')
@@ -111,7 +188,13 @@ class Blueprint:
                 for action in button.actions:
                     if not action.check_conditions( data ):
                         continue
-                    _callback( { "identifier": data.get('topic') if self.is_mqtt else data.get(self.identifier_key) } )
+                    identifier = data.get('topic') if self.is_mqtt else data.get(self.identifier_key)
+                    discovered = { "identifier": identifier }
+                    if self.is_event_entity:
+                        # A device id says nothing to a human, so hand the panel the
+                        # device name as well for the discovery list.
+                        discovered['name'] = get_device_name( self._hass, data.get('device_id') )
+                    _callback( discovered )
                     return
 
         listeners = await create_event_listeners( self._hass, self, subscribe_topic, _processIncoming )

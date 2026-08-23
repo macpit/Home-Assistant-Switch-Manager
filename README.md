@@ -24,7 +24,7 @@ We're looking for community input on what to build next! Vote by opening an [iss
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Matter support** | Generic event-entity connection type so Matter remotes (IKEA BILRESA incl. scroll wheel, and others) can be used like any other switch ([#46](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/46), [#51](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/51), [PR #59](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/59)) | **Coming next** |
+| **Matter support** | Generic event-entity connection type so Matter remotes (IKEA BILRESA incl. scroll wheel, and others) can be used like any other switch ([#46](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/46), [#51](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/51), [PR #59](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/59)) | In progress — event-entity connection type and IKEA BILRESA dual button blueprint done, scroll wheel next |
 | Visual Blueprint Editor | Create blueprints in the GUI instead of writing YAML by hand ([PR #39](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/39)) | In progress |
 | Action Test Buttons in switch config | Fire a single configured action from the switch view ([#50](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/50)) | Planned |
 | Switch Groups | Apply one configuration to several physical switches ([#45](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/45)) | Idea |
