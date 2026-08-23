@@ -149,7 +149,7 @@ def scale_sequence_fields( sequence, fields, factor ):
     def walk( node ):
         if isinstance(node, dict):
             for key, value in node.items():
-                if key in ('data', 'service_data') and isinstance(value, dict):
+                if key in ('data', 'service_data', 'event_data') and isinstance(value, dict):
                     for field in fields:
                         if field in value:
                             value[field] = _scale_number(value[field], factor)
