@@ -24,7 +24,7 @@ We're looking for community input on what to build next! Vote by opening an [iss
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **Matter support** | Generic event-entity connection type so Matter remotes (IKEA BILRESA incl. scroll wheel, and others) can be used like any other switch ([#46](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/46), [#51](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/51), [PR #59](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/59)) | In progress — event-entity connection type and IKEA BILRESA dual button blueprint done, scroll wheel next |
+| **Matter support** | Generic event-entity connection type so Matter remotes (IKEA BILRESA incl. scroll wheel, and others) can be used like any other switch ([#46](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/46), [#51](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/51), [PR #59](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/59)) | **Done in v5.0.0** — `event_entity` connection type, IKEA BILRESA dual button and scroll wheel blueprints |
 | Visual Blueprint Editor | Create blueprints in the GUI instead of writing YAML by hand ([PR #39](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/39)) | In progress |
 | Action Test Buttons in switch config | Fire a single configured action from the switch view ([#50](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/50)) | Planned |
 | Switch Groups | Apply one configuration to several physical switches ([#45](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/45)) | Idea |
@@ -226,8 +226,8 @@ Option          | Values       | Required | Details
 --              | -            | -        | -
 name            | `string`     | *        | A friendly name for the switch
 service         | `string`     | *        | The service or integration that this switch relates to (matching services will be grouped when selecting a blueprint from gui)
-event_type      | `string`     | *        | Must match the event type through the event bus triggered by the switch (Monitor `*` events in developer tools if unsure of its value). Set this to mqtt if handling a mqtt message instead of an event (see [mqtt](#mqtt))
-identifier_key  | `string`     | * If not mqtt       | The key in the event data that will uniquely identify a switch.
+event_type      | `string`     | *        | Must match the event type through the event bus triggered by the switch (Monitor `*` events in developer tools if unsure of its value). Set this to mqtt if handling a mqtt message instead of an event (see [mqtt](#mqtt)) or to `event_entity` for remotes that surface as `event.*` entities such as Matter devices (see [Event entities](#event-entities-matter))
+identifier_key  | `string`     | * If not mqtt       | The key in the event data that will uniquely identify a switch. For `event_entity` blueprints this is `device_id`.
 mqtt_topic_format| `string`    | -        | If event_type is mqtt, then this will give the user an understanding of what they should set their topic as. example: zigbee2mqtt/+/action. The MQTT topic here will also help with discovery (remember to use wildcard `+` where needed). **Make sure you set this to the standard topic if planning on sharing blueprint and not a topic that you have customised yourself through the integration**
 mqtt_sub_topics | `bool`       | -        | Along with the original topic, sub topics will also be listened to and passed in for condition checking etc. If enabled then make sure the original topic doesn't use `#` wildcards or `+` at the end. Default is false
 info            | `string`     | -        | You can add any additional information needed for the blueprint for users to read that wouldn't understand how it operates or has some **noteworthy** information
@@ -285,6 +285,8 @@ Option          | Values                          | Required | Details
 --              | -                               | -        | -
 title           | `string`                        | *        | Please read naming convention to better understand what title should be used
 conditions      | `list` [Condition](#condition) \| `string` [Template](https://www.home-assistant.io/docs/configuration/templating/)  | -        | This optional list or [Template](https://www.home-assistant.io/docs/configuration/templating/) allows the action to only accept conditions within the event data or mqtt payload. This can help scope down to the kind of action if the button has multiple. All conditions must evaluate to true to be valid. See [Condition](#condition) for details on defining a condition. 
+scale_field     | `string` \| `list`             | -        | Name(s) of numeric service data fields (`data` / `service_data` / `event_data`) that are multiplied by the event's press or notch count (`data.presses`) before the sequence runs **once**. Meant for relative values like `brightness_step_pct` on a scroll wheel so the user's action stays a plain step without templates.
+repeat          | `string`                        | -        | Name of a numeric field in the event data (e.g. `presses`) used as a repeat count; the whole sequence runs that many times in order. Use for discrete actions (next track, scene cycling). `scale_field` wins if both are set. Both are capped at 50.
 
 ### Condition
 
@@ -315,6 +317,35 @@ conditions:
     value: KeyPressed
   - key: group
     value: 1
+```
+
+### Event entities (Matter)
+
+Matter remotes (and some other integrations such as Hue or Zigbee2MQTT with HA discovery) do not fire a bus event. Each button is an `event.*` entity whose state changes on every press while `attributes.event_type` says what happened. Blueprints with `event_type: event_entity` listen to those state changes; the switch identifier is the Home Assistant **device id** of the remote (auto discovery shows the device name, just press a button) and the data the conditions see is:
+
+Key             | Details
+--              | -
+event_type      | The event, e.g. `multi_press_1`, `multi_press_2`, `long_press`, `long_release`
+presses         | Press / notch count of the event (`totalNumberOfPressesCounted` or the `N` in `multi_press_N`), default 1. Used by `scale_field` and `repeat`
+entity_id, device_id, unique_id, original_name, platform | Registry details of the entity that fired
+endpoint        | Matter endpoint number parsed from the unique id (`None` for non Matter entities). Handy to tell buttons apart, see the BILRESA blueprints
+entity_index    | 0 based position of the entity among the device's `event.*` entities, ordered by endpoint. Stable even when the user renames entities
+attributes      | All remaining entity attributes are also available at the top level (e.g. `previousPosition`, `newPosition`)
+
+```yaml
+name: IKEA BILRESA Dual Button (E2489)
+service: Matter
+event_type: event_entity
+identifier_key: device_id
+buttons:
+  - conditions:
+      - key: entity_index
+        value: 0
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: multi_press_1
 ```
 
 ### MQTT
