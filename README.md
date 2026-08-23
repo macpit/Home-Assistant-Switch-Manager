@@ -52,6 +52,13 @@ Switch manager is a centralised component to handle button pushes for your wirel
 
 [![Home Assistant Switch Manager ist zurück! Fork rettet das beliebte Tool | Update 2026](images/youtube-smart-live.jpg)](https://www.youtube.com/watch?v=M_hLZacsjP4)
 
+#### New in v5: Matter
+
+Remotes added over **Matter** (here the IKEA BILRESA dual button and scroll wheel) are configured like any other switch. Switch Manager listens to their `event.*` entities, so there is nothing to set up besides picking the blueprint and pressing a button to discover the device:
+<p float="left">
+  <img src="images/v5-matter-blueprints.png" width="40%" />
+</p>
+
 #### Screenshots (v4.3)
 
 Switch list and switch editor — pick a button on the device image, then build a sequence per action (press / hold / …):
