@@ -48,7 +48,7 @@ Switch manager is a centralised component to handle button pushes for your wirel
 
 #### Community
 
-Questions, feedback and blueprint requests: join the thread on the Home Assistant forum – [Switch Manager v5.0.0 with Matter support](https://community.home-assistant.io/t/maintained-fork-switch-manager-wireless-button-switch-action-manager-hacs-v5-0-0-with-matter-support/1022264).
+HAS Forum – [Switch Manager v5.0.0 with Matter support](https://community.home-assistant.io/t/maintained-fork-switch-manager-wireless-button-switch-action-manager-hacs-v5-0-0-with-matter-support/1022264).
 
 #### Video
 
