@@ -8,7 +8,14 @@ CONDITION_SCHEMA = vol.Schema({
 })
 BLUEPRINT_ACTION_SCHEMA = vol.Schema({
     vol.Required('title'): cv.string,
-    vol.Optional('conditions', default=[]): vol.Any(cv.string, [CONDITION_SCHEMA])
+    vol.Optional('conditions', default=[]): vol.Any(cv.string, [CONDITION_SCHEMA]),
+    # Service data field(s) multiplied by the events press / notch count
+    # (`data.presses`) before the sequence runs once, e.g. `brightness_step_pct`
+    # for a scroll wheel. Keeps the users action a plain template free step.
+    vol.Optional('scale_field'): vol.Any(cv.string, [cv.string]),
+    # Name of a numeric data field used as repeat count for the whole sequence
+    # (`presses` runs a discrete action once per notch). Alternative to scale_field.
+    vol.Optional('repeat'): cv.string,
 })
 SHAPE_CIRCLE_SCHEMA = vol.Schema({
     vol.Required('x'): cv.positive_int,

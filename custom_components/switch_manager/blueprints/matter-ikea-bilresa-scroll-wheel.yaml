@@ -1,0 +1,140 @@
+name: IKEA BILRESA Scroll Wheel
+service: Matter
+event_type: event_entity
+identifier_key: device_id
+info: >-
+  IKEA BILRESA scroll wheel remote over Matter. Identifier is the Home Assistant
+  device id of the remote (use auto discovery and turn the wheel once).
+  The three LEDs on the lower part select one of three modes; pressing the lower
+  part only cycles the LED and produces no Home Assistant event. The three buttons
+  here are the three LEDs (left = LED 1, middle = LED 2, right = LED 3), each with
+  press / press 2x / hold / hold (released) / rotate right / rotate left.
+  Rotate: a single light.turn_on with brightness_step_pct (e.g. 5 / -5) is enough.
+  Fast scrolling is batched by Matter into one event covering several notches and
+  the rotate actions multiply brightness_step_pct by that notch count
+  (data.presses), so a quick flick dims by the full amount in one call. Set the
+  rotate actions' mode to "queued" so slow scrolling is not dropped either.
+  Endpoint numbering follows the common BILRESA layout (per LED: rotate right,
+  rotate left, press). If your unit differs, watch data.endpoint in the monitor and
+  adjust the conditions.
+buttons:
+  # LED 1: endpoints rotate right = 1, rotate left = 2, press = 3
+  - x: 124
+    y: 336
+    width: 10
+    conditions: "{{ data.endpoint in [1, 2, 3] }}"
+    actions:
+      - title: press
+        conditions:
+          - key: endpoint
+            value: "3"
+          - key: event_type
+            value: multi_press_1
+      - title: press 2x
+        conditions:
+          - key: endpoint
+            value: "3"
+          - key: event_type
+            value: multi_press_2
+      - title: hold
+        conditions:
+          - key: endpoint
+            value: "3"
+          - key: event_type
+            value: long_press
+      - title: hold (released)
+        conditions:
+          - key: endpoint
+            value: "3"
+          - key: event_type
+            value: long_release
+      - title: rotate right
+        conditions:
+          - key: endpoint
+            value: "1"
+        scale_field: brightness_step_pct
+      - title: rotate left
+        conditions:
+          - key: endpoint
+            value: "2"
+        scale_field: brightness_step_pct
+  # LED 2: endpoints rotate right = 4, rotate left = 5, press = 6
+  - x: 148
+    y: 336
+    width: 10
+    conditions: "{{ data.endpoint in [4, 5, 6] }}"
+    actions:
+      - title: press
+        conditions:
+          - key: endpoint
+            value: "6"
+          - key: event_type
+            value: multi_press_1
+      - title: press 2x
+        conditions:
+          - key: endpoint
+            value: "6"
+          - key: event_type
+            value: multi_press_2
+      - title: hold
+        conditions:
+          - key: endpoint
+            value: "6"
+          - key: event_type
+            value: long_press
+      - title: hold (released)
+        conditions:
+          - key: endpoint
+            value: "6"
+          - key: event_type
+            value: long_release
+      - title: rotate right
+        conditions:
+          - key: endpoint
+            value: "4"
+        scale_field: brightness_step_pct
+      - title: rotate left
+        conditions:
+          - key: endpoint
+            value: "5"
+        scale_field: brightness_step_pct
+  # LED 3: endpoints rotate right = 7, rotate left = 8, press = 9
+  - x: 173
+    y: 336
+    width: 10
+    conditions: "{{ data.endpoint in [7, 8, 9] }}"
+    actions:
+      - title: press
+        conditions:
+          - key: endpoint
+            value: "9"
+          - key: event_type
+            value: multi_press_1
+      - title: press 2x
+        conditions:
+          - key: endpoint
+            value: "9"
+          - key: event_type
+            value: multi_press_2
+      - title: hold
+        conditions:
+          - key: endpoint
+            value: "9"
+          - key: event_type
+            value: long_press
+      - title: hold (released)
+        conditions:
+          - key: endpoint
+            value: "9"
+          - key: event_type
+            value: long_release
+      - title: rotate right
+        conditions:
+          - key: endpoint
+            value: "7"
+        scale_field: brightness_step_pct
+      - title: rotate left
+        conditions:
+          - key: endpoint
+            value: "8"
+        scale_field: brightness_step_pct
