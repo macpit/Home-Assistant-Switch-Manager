@@ -72,7 +72,7 @@ function t(t,e,i,s){var o,r=arguments.length,a=r<3?e:null===s?s=Object.getOwnPro
     ::slotted(button.destructive) {
       color: var(--error-color, #db4437);
     }
-  `}};t([pt()],St.prototype,"heading",void 0),St=t([lt("switch-manager-dialog")],St);let kt=class extends nt{constructor(){super(...arguments),this._blueprints=[],this._filter="",this._protocol=""}showDialog(t){this._params=t,this.hass=this.parentElement?.hass||document.querySelector("home-assistant")?.hass,this._loadBlueprints()}closeDialog(){this._params=void 0,this._blueprints=[],this._filter="",this._protocol=""}_protoKey(t){return(t.event_type||"").split(/[._]/)[0]}async _loadBlueprints(){const t=await this.hass.callWS({type:wt("blueprints")});this._blueprints=Object.values(t.blueprints)}render(){if(!this._params)return I``;const t=new Map;for(const e of this._blueprints){const i=this._protoKey(e);i&&t.set(i,(t.get(i)||0)+1)}const e=[...t.entries()].sort((t,e)=>e[1]-t[1]),i=this._blueprints.filter(t=>{const e=!this._filter||t.name.toLowerCase().includes(this._filter.toLowerCase())||t.service.toLowerCase().includes(this._filter.toLowerCase()),i=!this._protocol||this._protoKey(t)===this._protocol;return e&&i});return I`
+  `}};t([pt()],St.prototype,"heading",void 0),St=t([lt("switch-manager-dialog")],St);let kt=class extends nt{constructor(){super(...arguments),this._blueprints=[],this._filter="",this._protocol=""}showDialog(t){this._params=t,this.hass=this.parentElement?.hass||document.querySelector("home-assistant")?.hass,this._loadBlueprints()}closeDialog(){this._params=void 0,this._blueprints=[],this._filter="",this._protocol=""}_protoKey(t){return"event_entity"===t.event_type?(t.service||"").toLowerCase():(t.event_type||"").split(/[._]/)[0]}async _loadBlueprints(){const t=await this.hass.callWS({type:wt("blueprints")});this._blueprints=Object.values(t.blueprints)}render(){if(!this._params)return I``;const t=new Map;for(const e of this._blueprints){const i=this._protoKey(e);i&&t.set(i,(t.get(i)||0)+1)}const e=[...t.entries()].sort((t,e)=>e[1]-t[1]),i=this._blueprints.filter(t=>{const e=!this._filter||t.name.toLowerCase().includes(this._filter.toLowerCase())||t.service.toLowerCase().includes(this._filter.toLowerCase()),i=!this._protocol||this._protoKey(t)===this._protocol;return e&&i});return I`
       <switch-manager-dialog @closed=${this.closeDialog} heading="Select Blueprint">
         <input
           class="search"
@@ -986,7 +986,7 @@ function t(t,e,i,s){var o,r=arguments.length,a=r<3?e:null===s?s=Object.getOwnPro
       color: var(--primary-text-color);
       font: inherit;
     }
-  `}};t([ut()],Ut.prototype,"_params",void 0),Ut=t([lt("switch-manager-dialog-confirm")],Ut);var qt=Object.freeze({__proto__:null,get SwitchManagerDialogConfirm(){return Ut}});let zt=class extends nt{constructor(){super(...arguments),this._identifier="",this._discovered=[],this._listening=!1}showDialog(t){this._params=t,this._identifier=t.identifier||"",this._discovered=[],this.hass=this.parentElement?.hass||document.querySelector("home-assistant")?.hass,this._startDiscovery()}closeDialog(){this._stopDiscovery(),this._params?.onClose?.(),this._params=void 0}async _startDiscovery(){const t=this._params.blueprint;if(t){this._listening=!0;try{this._unsubscribe=await this.hass.connection.subscribeMessage(t=>{t.identifier&&!this._discovered.includes(t.identifier)&&(this._discovered=[...this._discovered,t.identifier])},{type:wt("blueprints/auto_discovery"),blueprint_id:t.id})}catch{this._listening=!1}}}_stopDiscovery(){this._unsubscribe?.(),this._unsubscribe=void 0,this._listening=!1}render(){return this._params?I`
+  `}};t([ut()],Ut.prototype,"_params",void 0),Ut=t([lt("switch-manager-dialog-confirm")],Ut);var qt=Object.freeze({__proto__:null,get SwitchManagerDialogConfirm(){return Ut}});let zt=class extends nt{constructor(){super(...arguments),this._identifier="",this._discovered=[],this._listening=!1}showDialog(t){this._params=t,this._identifier=t.identifier||"",this._discovered=[],this.hass=this.parentElement?.hass||document.querySelector("home-assistant")?.hass,this._startDiscovery()}closeDialog(){this._stopDiscovery(),this._params?.onClose?.(),this._params=void 0}async _startDiscovery(){const t=this._params.blueprint;if(t){this._listening=!0;try{this._unsubscribe=await this.hass.connection.subscribeMessage(t=>{t.identifier&&!this._discovered.some(e=>e.identifier===t.identifier)&&(this._discovered=[...this._discovered,{identifier:t.identifier,name:t.name}])},{type:wt("blueprints/auto_discovery"),blueprint_id:t.id})}catch{this._listening=!1}}}_stopDiscovery(){this._unsubscribe?.(),this._unsubscribe=void 0,this._listening=!1}render(){return this._params?I`
       <switch-manager-dialog
         @closed=${this.closeDialog}
         heading="Switch Identifier"
@@ -1000,7 +1000,14 @@ function t(t,e,i,s){var o,r=arguments.length,a=r<3?e:null===s?s=Object.getOwnPro
             @input=${t=>this._identifier=t.target.value}
           />
 
-          ${this._params.blueprint?.mqtt_topic_format?I`<div class="identifier-ref">
+          ${"event_entity"===this._params.blueprint?.event_type?I`<div class="identifier-ref">
+                Identifier is the Home Assistant <b>device id</b> of the remote;
+                its <code>event.*</code> entities are used.
+                |
+                <a href="/config/devices/dashboard" target="_blank" rel="noreferrer"
+                  >Devices</a
+                >
+              </div>`:this._params.blueprint?.mqtt_topic_format?I`<div class="identifier-ref">
                 MQTT Discovery Topic:
                 <b>${this._params.blueprint.mqtt_topic_format}</b>
                 |
@@ -1027,9 +1034,10 @@ function t(t,e,i,s){var o,r=arguments.length,a=r<3?e:null===s?s=Object.getOwnPro
                           ${this._discovered.map(t=>I`
                               <div
                                 class="list-item"
-                                @click=${()=>this._selectIdentifier(t)}
+                                @click=${()=>this._selectIdentifier(t.identifier)}
                               >
-                                ${t}
+                                ${t.name?I`<b>${t.name}</b>
+                                      <span class="list-item-sub">${t.identifier}</span>`:t.identifier}
                               </div>
                             `)}
                         </div>
@@ -1078,6 +1086,12 @@ function t(t,e,i,s){var o,r=arguments.length,a=r<3?e:null===s?s=Object.getOwnPro
       cursor: pointer;
       padding: 12px 8px;
       border-radius: 4px;
+    }
+    .list-item-sub {
+      display: block;
+      font-size: 0.8em;
+      color: var(--secondary-text-color);
+      word-break: break-all;
     }
     .list-item:hover {
       background: var(--secondary-background-color, rgba(127, 127, 127, 0.1));

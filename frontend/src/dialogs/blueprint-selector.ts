@@ -26,6 +26,11 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
   }
 
   private _protoKey(bp: Blueprint): string {
+    // Event-entity blueprints share one generic event_type, so the integration
+    // they belong to (Matter, Hue, ...) comes from the service field instead.
+    if (bp.event_type === "event_entity") {
+      return (bp.service || "").toLowerCase();
+    }
     return (bp.event_type || "").split(/[._]/)[0];
   }
 
