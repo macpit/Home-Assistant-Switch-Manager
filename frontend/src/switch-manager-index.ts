@@ -6,7 +6,7 @@ import type {
   Route,
   SwitchConfig,
   SwitchListItem,
-  ConfigsResponse,
+  ConfigsResponse, SaveConfigResponse,
 } from "./types";
 import {
   wsType,
@@ -36,6 +36,10 @@ const mdiContentCopy =
   "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z";
 const mdiMagnify =
   "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z";
+const mdiCamera =
+    "M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"
+const mdiImageFrage =
+    "M10,14.29L6.5,19H17.46L14.75,15.46L12.78,17.8L10,14.29M5,21V7H18.96V21H5M12,2.4L14.61,5.03H9.37L12,2.4M5,5.03C4.5,5.03 4,5.22 3.61,5.61C3.2,6 3,6.46 3,7V21C3,21.5 3.2,22 3.61,22.39C4,22.8 4.5,23 5,23H18.96C19.5,23 19.96,22.8 20.37,22.39C20.77,22 21,21.5 21,21V7C21,6.46 20.77,6 20.37,5.61C19.96,5.22 19.5,5.03 18.96,5.03H16L12,1L7.96,5.03H5Z"
 
 @customElement("switch-manager-index")
 export class SwitchManagerIndex extends LitElement {
@@ -113,6 +117,16 @@ export class SwitchManagerIndex extends LitElement {
     item: SwitchListItem
   ): { path: string; label: string; action: () => void; warning?: boolean }[] {
     return [
+      {
+        path: mdiCamera,
+        label: "Set custom Image",
+        action: () => this._uploadEncodedImage(item),
+      },
+      {
+        path: mdiImageFrage,
+        label: "Use Default Image",
+        action: () => this._removeCustomImage(item),
+      },
       {
         path: item.enabled ? mdiStop : mdiPlay,
         label: item.enabled ? "Disable" : "Enable",
@@ -199,16 +213,9 @@ export class SwitchManagerIndex extends LitElement {
                           @click=${() => this._editSwitch(item.switch_id)}
                         >
                           <div class="td col-image">
-                            ${item.switch.valid_blueprint &&
-                            item.switch.blueprint.has_image
-                              ? html`<img
-                                  src="${assetUrl(
-                                    item.blueprint_id + ".png"
-                                  )}"
-                                />`
-                              : html`<ha-svg-icon
-                                  .path=${mdiGestureTapButton}
-                                ></ha-svg-icon>`}
+                            ${this._getImageSrcData(item)
+                              ? html`<img src="${this._getImageSrcData(item)}">`
+                              : html`<ha-svg-icon .path=${mdiGestureTapButton}>`}
                           </div>
                           <div class="td col-name">
                             <span class="name-text">
@@ -296,6 +303,18 @@ export class SwitchManagerIndex extends LitElement {
     navigate(navigateTo(`edit/${id}`));
   }
 
+  private _getImageSrcData(item: SwitchListItem): string | null {
+    if(item.switch.custom_image !== "") {
+      return item.switch.custom_image
+    }
+
+    if(item.switch.valid_blueprint && item.switch.blueprint.has_image) {
+      return assetUrl(item.blueprint_id + ".png")
+    }
+
+    return null
+  }
+
   private async _toggleEnabled(switchId: string, currentEnabled: boolean) {
     try {
       const res = await this.hass.callWS<{ enabled: boolean }>({
@@ -305,6 +324,54 @@ export class SwitchManagerIndex extends LitElement {
       });
       this._populateSwitches();
       showToast(this, `Switch ${res.enabled ? "Enabled" : "Disabled"}`);
+    } catch (e: any) {
+      showToast(this, e.message);
+    }
+  }
+
+  private async _uploadEncodedImage(item: SwitchListItem) {
+    try {
+      const imageInput = document.createElement("input");
+      imageInput.type = "file";
+
+      imageInput?.addEventListener("change", () => {
+        const file = imageInput.files?.[0];
+        if (!file) return;
+        showToast(this, `Selected file: ${file.name}`);
+
+        const reader = new FileReader();
+        reader.onload = async () => {
+          item.switch.custom_image = reader.result as string;
+
+          try {
+            await this.hass.callWS({
+              type: wsType("config/save"),
+              config: { ...item.switch, blueprint: (item.switch.blueprint as any).id },
+              fix_mismatch: true,
+            });
+            this._populateSwitches();
+          } catch (e: any) {
+            showToast(this, e.message);
+          }
+        };
+
+        reader.readAsDataURL(file);
+      });
+      imageInput.click();
+
+    } catch (e: any) {
+      showToast(this, e.message);
+    }
+  }
+
+  private async _removeCustomImage(item: SwitchListItem) {
+    try {
+      item.switch.custom_image = ""
+      await this.hass.callWS({
+        type: wsType("config/save"),
+        config: { ...item.switch, blueprint: (item.switch.blueprint as any).id },
+        fix_mismatch: true,
+      });
     } catch (e: any) {
       showToast(this, e.message);
     }

@@ -13,6 +13,7 @@ STORAGE_ID = "switch_manager"
 @attr.s
 class SwitchManagerManagedSwitchData:
     name = attr.ib(type=str, default='')
+    custom_image = attr.ib(type=str, default='')
     enabled = attr.ib(type=bool, default=True)
     blueprint = attr.ib(type=str, default=None)
     identifier = attr.ib(type=str, default=None)

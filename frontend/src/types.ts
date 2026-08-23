@@ -83,6 +83,7 @@ export interface SwitchConfig {
   identifier: string;
   blueprint: Blueprint;
   valid_blueprint: boolean;
+  custom_image: string;
   is_mismatch: boolean;
   rotate: number;
   buttons: SwitchConfigButton[];

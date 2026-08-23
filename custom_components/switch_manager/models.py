@@ -529,7 +529,8 @@ class ManagedSwitchConfig:
         self._event_listeners = []
         self._error = None
         self.id = str( _id ) # Ensute id is a string for future proofing
-        self.name = config.get('name')        
+        self.name = config.get('name')
+        self.custom_image = config.get('custom_image', '')
         self.identifier = config.get('identifier')
         self.blueprint: Blueprint
         self.valid_blueprint: bool
@@ -545,6 +546,7 @@ class ManagedSwitchConfig:
 
     def update( self, config ):
         self.name = config.get('name')
+        self.custom_image = config.get('custom_image', '')
         self.identifier = config.get('identifier')
         self.variables: dict = config.get('variables')
         self.rotate: int = config.get('rotate', 0)
