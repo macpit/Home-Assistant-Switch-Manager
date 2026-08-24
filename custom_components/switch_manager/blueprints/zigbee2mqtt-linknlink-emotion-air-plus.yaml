@@ -19,4 +19,8 @@ buttons:
       - title: hold
         conditions:
           - key: 'action'
+            value: 'brightness_move_up'
+      - title: hold (released)
+        conditions:
+          - key: 'action'
             value: 'brightness_stop'
