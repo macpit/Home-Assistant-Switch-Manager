@@ -29,6 +29,7 @@ export function createEmptyConfig(blueprint: Blueprint): SwitchConfig {
     identifier: "",
     blueprint: blueprint,
     valid_blueprint: true,
+    custom_image: "",
     buttons: [],
     is_mismatch: false,
     rotate: 0,

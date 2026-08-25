@@ -157,13 +157,16 @@ export class SwitchManagerSwitchEditor extends LitElement {
       </div>
 
       <div class="view">
+        <div>
+          ${this.config.custom_image === "" ? nothing : html`<img src="${this.config.custom_image}" id="custom-image">`}
           ${hasError ? nothing : html`<h3 id="blueprint-name">${this.blueprint?.service} / ${this.blueprint?.name}</h3>`}
+        </div>
 
-          <div id="switch-image" rotate="${this.config.rotate}">
-            ${!this.blueprint || this.blueprint?.has_image
+        <div id="switch-image" rotate="${this.config.rotate}">
+          ${!this.blueprint || this.blueprint?.has_image
               ? html`<svg id="switch-svg"></svg>`
               : html`<ha-svg-icon .path=${mdiSwitchIcon}></ha-svg-icon>`}
-          </div>
+        </div>
 
           ${hasError ? nothing : html`
             <switch-manager-button-actions
@@ -871,6 +874,17 @@ export class SwitchManagerSwitchEditor extends LitElement {
     }
     ha-fab.blocked {
       bottom: calc(-80px - env(safe-area-inset-bottom));
+    }
+    
+    #custom-image {
+      object-fit: cover;
+      float: left;
+      padding: 12px;
+      vertical-align: middle;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-right: 16px;
     }
   `;
 }

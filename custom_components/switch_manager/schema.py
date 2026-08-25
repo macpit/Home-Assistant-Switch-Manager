@@ -73,6 +73,7 @@ SWITCH_MANAGER_CONFIG_BUTTON_SCHEMA = vol.Schema({
 SWITCH_MANAGER_CONFIG_SCHEMA = vol.Schema({
     vol.Required('id', default=None): vol.Any(str, int, None),
     vol.Required('name'): cv.string,
+    vol.Required('custom_image', default=''): cv.string,
     vol.Required('enabled', default=True): bool,
     vol.Required('blueprint'): cv.string,
     vol.Required('identifier'): cv.string,
