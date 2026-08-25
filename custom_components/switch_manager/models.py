@@ -163,6 +163,21 @@ def scale_sequence_fields( sequence, fields, factor ):
     walk(scaled)
     return scaled
 
+def sequence_has_fields( sequence, fields ) -> bool:
+    """Does any step of the sequence carry one of the given service data fields?"""
+    def walk( node ):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ('data', 'service_data', 'event_data') and isinstance(value, dict):
+                    if any(field in value for field in fields):
+                        return True
+                elif walk(value):
+                    return True
+        elif isinstance(node, list):
+            return any(walk(item) for item in node)
+        return False
+    return walk(sequence)
+
 def get_device_name( hass: HomeAssistant, device_id ) -> str | None:
     if not device_id:
         return None
@@ -479,9 +494,11 @@ class ManagedSwitchConfigButtonAction:
             await self._run_loop( data, context )
             return
 
-        if factor > 1 and self.blueprint.scale_field:
+        if factor > 1 and self.blueprint.scale_field and sequence_has_fields( self.sequence, self.blueprint.scale_field ):
             # Run once with the fields multiplied: a fast scroll of N notches dims by
             # step * N in one call instead of N relative steps racing each other.
+            # A sequence without any of those fields (media_player.volume_up, a scene,
+            # ...) has nothing to scale and falls through to running once per notch.
             try:
                 script = await self._make_script(
                     scale_sequence_fields( self.sequence, self.blueprint.scale_field, factor )

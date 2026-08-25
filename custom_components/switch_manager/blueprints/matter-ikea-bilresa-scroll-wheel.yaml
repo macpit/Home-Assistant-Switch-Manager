@@ -12,8 +12,10 @@ info: >-
   Rotate: a single light.turn_on with brightness_step_pct (e.g. 5 / -5) is enough.
   Fast scrolling is batched by Matter into one event covering several notches and
   the rotate actions multiply brightness_step_pct by that notch count
-  (data.presses), so a quick flick dims by the full amount in one call. Set the
-  rotate actions' mode to "queued" so slow scrolling is not dropped either.
+  (data.presses), so a quick flick dims by the full amount in one call. Sequences
+  without that field (media_player.volume_up, input_number.increment, ...) run
+  once per notch instead. Set the rotate actions' mode to "queued" so slow
+  scrolling is not dropped either.
   Endpoint numbering follows the common BILRESA layout (per LED: rotate right,
   rotate left, press). If your unit differs, watch data.endpoint in the monitor and
   adjust the conditions.
