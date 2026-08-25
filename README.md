@@ -31,6 +31,7 @@ We're looking for community input on what to build next! Vote by opening an [iss
 | Blueprint Import via URL/YAML | Import community blueprints directly from a URL or paste YAML — no manual file copying | Idea |
 | Backup / Export | Export and import switch configurations as YAML for migration or backup | Idea |
 | Search & replace on clone | Replace device/entity IDs when duplicating a switch ([#4](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/4)) | Idea |
+| Repeat until release | Hold to dim: an action repeats its sequence until the button's release event arrives ([#27](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/27)) | **Done (v5.1.0)** |
 | Blueprint auto-heal | Switches follow blueprints that gain buttons/actions automatically | **Done (v4.3.2)** |
 | Protocol filter in blueprint picker | Filter the blueprint list by Zigbee2MQTT, ZHA, deCONZ, … | **Done (v4.2.0)** |
 | Switch Cloning | Duplicate a switch from the list view three-dot menu | **Done (v3.0.6)** |
@@ -56,7 +57,9 @@ HAS Forum – [Switch Manager v5.0.0 with Matter support](https://community.home
 
 [![Home Assistant Switch Manager ist zurück! Fork rettet das beliebte Tool | Update 2026](images/youtube-smart-live.jpg)](https://www.youtube.com/watch?v=M_hLZacsjP4)
 
-#### New in v5: Matter
+#### New in v5: Matter, repeat until release
+
+**v5.1:** actions with a release counterpart (hold / hold (released)) can repeat their sequence until the button is let go — hold to dim, hold to change volume. See [Repeat until release](#repeat-until-release-hold-to-dim).
 
 Remotes added over **Matter** (here the IKEA BILRESA dual button and scroll wheel) are configured like any other switch. Switch Manager listens to their `event.*` entities, so there is nothing to set up besides picking the blueprint and pressing a button to discover the device:
 <p float="left">
@@ -295,7 +298,7 @@ To unify switches added to Switch Manager, it makes sense to conform to a naming
 * If a button has a initial press action (where it's always called before other actions) then this should be called **init**, this is useful for setting timers and other initiating actions 
 * If button then the action should be **press**. This is generally the release of a short press and **not** the moment the button was pressed as this would generally be **init**
 * If action is double press or triple press and so on then the action should be **press 2x** or **press 3x** and so on
-* If the button supports a hold/long and hold/long release then there should be an action for both **hold** and **hold (released)** do **NOT** use the wording **long**
+* If the button supports a hold/long and hold/long release then there should be an action for both **hold** and **hold (released)** do **NOT** use the wording **long**. This pairing is also what enables [Repeat until release](#repeat-until-release-hold-to-dim) for the **hold** action; use `released_by` only if you cannot follow the naming
 * Do **NOT** use **short** or **short release** as this is generally a generic **init** or **press**
 * In the case where a switch allows multiple buttons to be pushed then you can prefix each action with **both** so a dual button press would be **both press** and **both press 2x** etc. This makes it clear to a user that the button they have selected is actually for multiple buttons. See [Xiaomi Double Key](https://github.com/macpit/Home-Assistant-Switch-Manager/blob/master/custom_components/switch_manager/blueprints/zigbee2mqtt-xiaomi-double-key-wxkg07lm.yaml) for an example
 
