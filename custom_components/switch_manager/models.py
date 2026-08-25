@@ -1,7 +1,8 @@
 import time
 import re
 import copy
-from .const import DOMAIN, LOGGER
+import asyncio
+from .const import DOMAIN, LOGGER, LOOP_MAX_SECONDS, LOOP_INTERVAL_DEFAULT
 from .helpers import format_mqtt_message, get_val_from_str
 from homeassistant.core import HomeAssistant, Context, callback, Event
 from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -162,6 +163,21 @@ def scale_sequence_fields( sequence, fields, factor ):
     walk(scaled)
     return scaled
 
+def sequence_has_fields( sequence, fields ) -> bool:
+    """Does any step of the sequence carry one of the given service data fields?"""
+    def walk( node ):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ('data', 'service_data', 'event_data') and isinstance(value, dict):
+                    if any(field in value for field in fields):
+                        return True
+                elif walk(value):
+                    return True
+        elif isinstance(node, list):
+            return any(walk(item) for item in node)
+        return False
+    return walk(sequence)
+
 def get_device_name( hass: HomeAssistant, device_id ) -> str | None:
     if not device_id:
         return None
@@ -304,7 +320,29 @@ class BlueprintButton:
 
         self.actions = []
         for i in range(len(config.get('actions'))):
-            self.actions.append( BlueprintButtonAction( hass, config.get('actions')[i], i ) )        
+            self.actions.append( BlueprintButtonAction( hass, config.get('actions')[i], i ) )
+        for action in self.actions:
+            action.release_index = self._find_release_index( action )
+
+    def _find_release_index( self, action ):
+        """Index of the action on this button whose event ends a loop of `action`.
+
+        Explicit `released_by` wins; otherwise the blueprint convention applies:
+        `hold` is released by `hold (released)`, or by a lone `released` / `release`.
+        """
+        titles = { a.title.strip().lower(): a.index for a in self.actions if a.title }
+        if action.released_by:
+            return titles.get( action.released_by.strip().lower() )
+        if not action.title:
+            return None
+        title = action.title.strip().lower()
+        if '(released)' in title or title in ('released', 'release'):
+            return None
+        index = titles.get( f"{title} (released)" )
+        if index is None and 'hold' in title:
+            candidates = [ titles[t] for t in ('released', 'release') if t in titles ]
+            index = candidates[0] if len(candidates) == 1 else None
+        return index
 
     def check_conditions( self, data ):
         return check_conditions( self._hass, self.conditions, data )
@@ -337,6 +375,9 @@ class BlueprintButtonAction:
         # ... or run the whole sequence as often as the named data field says
         # (discrete actions such as "next track").
         self.repeat = config.get('repeat')
+        # Loop-until-release: which sibling action ends a looping run of this one.
+        self.released_by = config.get('released_by')
+        self.release_index = None
 
     def check_conditions( self, data ):
         return check_conditions( self._hass, self.conditions, data )
@@ -366,11 +407,49 @@ class ManagedSwitchConfigButtonAction:
         self.index = index
         self.sequence = config.get('sequence')
         self.mode = config.get('mode')
+        self.loop = bool(config.get('loop', False))
+        self.loop_interval = int(config.get('loop_interval', LOOP_INTERVAL_DEFAULT))
         self.blueprint: BlueprintButtonAction = blueprint_action
 
         self.script: Script = None
         self.active = bool(self.sequence)
+        self._loop_stop = asyncio.Event()
+        self._loop_task: asyncio.Task = None
+        self._loop_deadline = 0.0
         hass.async_create_task( self.init_script() )
+
+    @property
+    def loops( self ) -> bool:
+        """Loop until release is configured and the blueprint knows a release action."""
+        return self.loop and self.blueprint.release_index is not None
+
+    def stop_loop( self ):
+        """End a running loop (release event, restart or teardown)."""
+        self._loop_stop.set()
+
+    async def _run_loop( self, data, context ):
+        self._loop_deadline = time.monotonic() + LOOP_MAX_SECONDS
+        if self._loop_task and not self._loop_task.done():
+            # Devices that keep sending "hold" while pressed just extend the safety
+            # deadline instead of starting a second loop.
+            return
+        self._loop_stop.clear()
+        self._loop_task = asyncio.current_task()
+        interval = max( self.loop_interval, 1 ) / 1000
+        LOGGER.debug(f"Loop started for switch:{self.switch_id} button:{self.button_index} action:{self.index} interval:{interval}s")
+        try:
+            while not self._loop_stop.is_set():
+                if time.monotonic() > self._loop_deadline:
+                    LOGGER.warning(f"switch:{self.switch_id} button:{self.button_index} action:{self.index} loop stopped after {LOOP_MAX_SECONDS}s without a release event")
+                    break
+                await self.script.async_run( run_variables=data, context=context )
+                try:
+                    await asyncio.wait_for( self._loop_stop.wait(), interval )
+                except asyncio.TimeoutError:
+                    pass
+        finally:
+            self._loop_task = None
+            LOGGER.debug(f"Loop ended for switch:{self.switch_id} button:{self.button_index} action:{self.index}")
 
     def _check_conditions( self, data ) -> bool:
         return self.blueprint.check_conditions( data )
@@ -411,9 +490,15 @@ class ManagedSwitchConfigButtonAction:
             LOGGER.debug(f'No sequence assigned for switch:{self.switch_id} button:{self.button_index} action:{self.index}')
             return
 
-        if factor > 1 and self.blueprint.scale_field:
+        if self.loops:
+            await self._run_loop( data, context )
+            return
+
+        if factor > 1 and self.blueprint.scale_field and sequence_has_fields( self.sequence, self.blueprint.scale_field ):
             # Run once with the fields multiplied: a fast scroll of N notches dims by
             # step * N in one call instead of N relative steps racing each other.
+            # A sequence without any of those fields (media_player.volume_up, a scene,
+            # ...) has nothing to scale and falls through to running once per notch.
             try:
                 script = await self._make_script(
                     scale_sequence_fields( self.sequence, self.blueprint.scale_field, factor )
@@ -436,7 +521,7 @@ class ManagedSwitchConfigButtonAction:
 
     # home assistant json
     def as_dict(self):
-        return {k: v for k, v in self.__dict__.items() if k in ['sequence', 'mode']}
+        return {k: v for k, v in self.__dict__.items() if k in ['sequence', 'mode', 'loop', 'loop_interval']}
 
     # attr dict
     def asdict(self):
@@ -478,6 +563,12 @@ class ManagedSwitchConfigButton:
         for action in self.actions:
             action.active = False
             action.script = None
+
+    def release( self, action_index: int ):
+        """An event for `action_index` fired: end loops that this action releases."""
+        for action in self.actions:
+            if action.blueprint.release_index == action_index:
+                action.stop_loop()
 
     def _check_conditions( self, data ):
         return self.blueprint.check_conditions( data )
@@ -649,6 +740,8 @@ class ManagedSwitchConfig:
                     action_index += 1
                     if not action._check_conditions( data ):
                         continue
+                    # A release event must end a running loop before its own sequence runs.
+                    button.release( action_index )
                     self._hass.async_create_task(
                         action.run( data={ "data": data }, context=context, factor=action.scale_factor( data ) )
                     )
@@ -684,12 +777,14 @@ class ManagedSwitchConfig:
     def stop_running_scripts( self ):
         for button in self.buttons:
             for action in button.actions:
+                action.stop_loop()
                 if action.script:
                     self._hass.async_create_task( action.script.async_stop() )
 
     def unload_scripts( self ):
         for button in self.buttons:
             for action in button.actions:
+                action.stop_loop()
                 if action.script:
                     # Script.async_unload() only exists from HA 2026.5 onwards; on older
                     # cores dropping the reference is all the teardown there is.

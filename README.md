@@ -145,6 +145,18 @@ Navigation and usage should be pretty straight forward.
 
 Remember to save before leaving the page when changes has been made! Once saved you can test to make sure all is working.
 
+#### Repeat until release (hold to dim)
+
+For actions that have a release counterpart in the blueprint (e.g. **hold** / **hold (released)**) the sequence editor shows a **Repeat until …** toggle next to the mode selector. When enabled, the sequence runs again and again while the button is held and stops as soon as the release event arrives. A typical use is dimming: a `light.turn_on` with `brightness_step_pct: -5` as the **hold** sequence and the toggle enabled.
+
+* **Interval (ms)** is the pause between two runs (default 250, 50–5000).
+* Use script mode `single` or `restart` for looping actions; `queued` / `parallel` are pointless here.
+* Devices that keep sending *hold* while pressed only extend the running loop, they do not start a second one.
+* If the release event gets lost the loop stops on its own after 15 seconds.
+* In YAML the action carries `loop: true` and `loop_interval: 250`.
+
+Blueprints pair actions automatically by title (`hold` → `hold (released)`, or a single `released` / `release` action on the same button). Blueprint authors can override this with `released_by` on the action.
+
 > Sometimes you may want certain buttons or actions handled by the devices default handler. For example, a Zigbee device may already be bound to a certain light which also imo has better response, reliability and stability. To remind you of this, you could add a stop action with a description of why the button shouldn't be changed and being handled somewhere else. Then for other actions that aren't handled elsewhere then you can handle them with this component. It's also fine to allow an external handler to handle the button push aswell as this component so a button could turn on the light handled via Zigbee and the component could start playing music based on the same switch action.
 
 #### Variables
@@ -296,8 +308,9 @@ Option          | Values                          | Required | Details
 --              | -                               | -        | -
 title           | `string`                        | *        | Please read naming convention to better understand what title should be used
 conditions      | `list` [Condition](#condition) \| `string` [Template](https://www.home-assistant.io/docs/configuration/templating/)  | -        | This optional list or [Template](https://www.home-assistant.io/docs/configuration/templating/) allows the action to only accept conditions within the event data or mqtt payload. This can help scope down to the kind of action if the button has multiple. All conditions must evaluate to true to be valid. See [Condition](#condition) for details on defining a condition. 
-scale_field     | `string` \| `list`             | -        | Name(s) of numeric service data fields (`data` / `service_data` / `event_data`) that are multiplied by the event's press or notch count (`data.presses`) before the sequence runs **once**. Meant for relative values like `brightness_step_pct` on a scroll wheel so the user's action stays a plain step without templates.
+scale_field     | `string` \| `list`             | -        | Name(s) of numeric service data fields (`data` / `service_data` / `event_data`) that are multiplied by the event's press or notch count (`data.presses`) before the sequence runs **once**. Meant for relative values like `brightness_step_pct` on a scroll wheel so the user's action stays a plain step without templates. If the sequence contains none of the fields (e.g. `media_player.volume_up`) it runs once per press/notch instead.
 repeat          | `string`                        | -        | Name of a numeric field in the event data (e.g. `presses`) used as a repeat count; the whole sequence runs that many times in order. Use for discrete actions (next track, scene cycling). `scale_field` wins if both are set. Both are capped at 50.
+released_by     | `string`                        | -        | Title of the action on the same button whose event ends a *repeat until release* loop of this action. Derived automatically from `hold` → `hold (released)` (or a lone `released` / `release`), so only needed for other naming.
 
 ### Condition
 

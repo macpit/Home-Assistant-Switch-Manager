@@ -40,6 +40,9 @@ export interface Panel {
 export interface BlueprintButtonAction {
   title: string;
   conditions: unknown[];
+  released_by?: string;
+  // Index of the sibling action whose event ends a "loop until release" run
+  release_index?: number | null;
 }
 
 export interface BlueprintButton {
@@ -70,6 +73,8 @@ export interface Blueprint {
 export interface SwitchConfigButtonAction {
   sequence: unknown[];
   mode: string;
+  loop?: boolean;
+  loop_interval?: number;
 }
 
 export interface SwitchConfigButton {

@@ -216,6 +216,33 @@ export class SwitchManagerSwitchEditor extends LitElement {
                         }}
                         @value-changed=${this._modeValueChanged}
                       ></ha-selector-select>
+                      ${this._canLoop()
+                        ? html`
+                            <span id="loop-options">
+                              <ha-formfield
+                                label="Repeat until ${this._releaseTitle()}"
+                                title="Run the sequence again and again until the release event of this button arrives"
+                              >
+                                <ha-switch
+                                  .checked=${!!this._currentAction()?.loop}
+                                  @change=${this._loopChanged}
+                                ></ha-switch>
+                              </ha-formfield>
+                              ${this._currentAction()?.loop
+                                ? html`<ha-textfield
+                                    id="loop-interval"
+                                    type="number"
+                                    label="Interval (ms)"
+                                    min="50"
+                                    max="5000"
+                                    step="50"
+                                    .value=${String(this._currentAction()?.loop_interval ?? 250)}
+                                    @change=${this._loopIntervalChanged}
+                                  ></ha-textfield>`
+                                : nothing}
+                            </span>
+                          `
+                        : nothing}
                     </h2>
                     <switch-manager-menu align="left">
                       <div class="menu-item" @click=${this._toggleYaml}>
@@ -566,6 +593,50 @@ export class SwitchManagerSwitchEditor extends LitElement {
     });
   }
 
+  private _currentAction() {
+    return this.config?.buttons[this.button_index]?.actions[this.action_index];
+  }
+
+  private _currentBlueprintAction() {
+    return this.blueprint?.buttons[this.button_index]?.actions[this.action_index];
+  }
+
+  private _canLoop(): boolean {
+    const idx = this._currentBlueprintAction()?.release_index;
+    return idx !== undefined && idx !== null;
+  }
+
+  private _releaseTitle(): string {
+    const idx = this._currentBlueprintAction()?.release_index;
+    if (idx === undefined || idx === null) return "release";
+    return this.blueprint?.buttons[this.button_index]?.actions[idx]?.title ?? "release";
+  }
+
+  private _loopChanged(e: Event) {
+    const action = this._currentAction();
+    if (!action) return;
+    const checked = (e.target as HTMLInputElement).checked;
+    if (!!action.loop !== checked) {
+      action.loop = checked;
+      if (checked && !action.loop_interval) action.loop_interval = 250;
+      this.requestUpdate("config");
+      this._dirty = true;
+    }
+  }
+
+  private _loopIntervalChanged(e: Event) {
+    const action = this._currentAction();
+    if (!action) return;
+    let value = parseInt((e.target as HTMLInputElement).value, 10);
+    if (isNaN(value)) value = 250;
+    value = Math.min(5000, Math.max(50, value));
+    if (action.loop_interval !== value) {
+      action.loop_interval = value;
+      this.requestUpdate("config");
+      this._dirty = true;
+    }
+  }
+
   private _modeValueChanged(e: CustomEvent) {
     const current = this.config?.buttons[this.button_index]?.actions[this.action_index]?.mode;
     if (current !== e.detail.value) {
@@ -817,6 +888,18 @@ export class SwitchManagerSwitchEditor extends LitElement {
     #mode-selector {
       display: inline-block;
       margin-left: 20px;
+    }
+    #loop-options {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: 20px;
+      font-size: 14px;
+      font-weight: normal;
+      vertical-align: middle;
+    }
+    #loop-interval {
+      width: 130px;
     }
     #switch-image > svg {
       overflow: visible;

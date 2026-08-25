@@ -1,6 +1,7 @@
 import voluptuous as vol
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.script import SCRIPT_MODE_CHOICES, DEFAULT_SCRIPT_MODE
+from .const import LOOP_INTERVAL_DEFAULT, LOOP_INTERVAL_MIN, LOOP_INTERVAL_MAX
 
 CONDITION_SCHEMA = vol.Schema({
     vol.Required('key'): cv.string,
@@ -16,6 +17,10 @@ BLUEPRINT_ACTION_SCHEMA = vol.Schema({
     # Name of a numeric data field used as repeat count for the whole sequence
     # (`presses` runs a discrete action once per notch). Alternative to scale_field.
     vol.Optional('repeat'): cv.string,
+    # Title of the action (same button) whose event ends a "loop until release" run
+    # of this action. Derived by convention (`hold` -> `hold (released)` / `released`)
+    # when omitted; set it explicitly for blueprints that name things differently.
+    vol.Optional('released_by'): cv.string,
 })
 SHAPE_CIRCLE_SCHEMA = vol.Schema({
     vol.Required('x'): cv.positive_int,
@@ -64,7 +69,13 @@ SWITCH_MANAGER_CONFIG_ACTION_SCHEMA = vol.All(
     _normalize_config_action,
     vol.Schema({
         vol.Required('mode', default=DEFAULT_SCRIPT_MODE): vol.In(SCRIPT_MODE_CHOICES),
-        vol.Required('sequence', default=[]): cv.ensure_list # cv.SCRIPT_SCHEMA: This was causing problems and not parsing json format when action delay etc was used
+        vol.Required('sequence', default=[]): cv.ensure_list, # cv.SCRIPT_SCHEMA: This was causing problems and not parsing json format when action delay etc was used
+        # Re-run the sequence until the blueprints release action fires (only honoured
+        # when the blueprint action has a release counterpart).
+        vol.Optional('loop', default=False): cv.boolean,
+        vol.Optional('loop_interval', default=LOOP_INTERVAL_DEFAULT): vol.All(
+            vol.Coerce(int), vol.Range(min=LOOP_INTERVAL_MIN, max=LOOP_INTERVAL_MAX)
+        ),
     })
 )
 SWITCH_MANAGER_CONFIG_BUTTON_SCHEMA = vol.Schema({
