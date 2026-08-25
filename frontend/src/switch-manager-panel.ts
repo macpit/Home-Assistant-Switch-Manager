@@ -21,6 +21,9 @@ const HA_COMPONENTS = [
   "ha-svg-icon",
   "ha-icon-button",
   "ha-menu-button",
+  "ha-switch",
+  "ha-formfield",
+  "ha-textfield",
 ];
 
 @customElement("switch-manager-panel")

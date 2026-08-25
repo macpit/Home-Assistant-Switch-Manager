@@ -15,4 +15,11 @@ CONF_STATIC_PATHS = 'static_paths'
 
 BLUEPRINTS_FOLDER = 'blueprints'
 
+# Loop-until-release: safety net for a lost release event, plus the bounds for the
+# per action interval between two runs (milliseconds).
+LOOP_MAX_SECONDS = 15
+LOOP_INTERVAL_DEFAULT = 250
+LOOP_INTERVAL_MIN = 50
+LOOP_INTERVAL_MAX = 5000
+
 LOGGER = logging.getLogger(__name__)
