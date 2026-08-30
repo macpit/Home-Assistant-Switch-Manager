@@ -16,14 +16,12 @@ const HA_COMPONENTS = [
   "ha-selector",
   "ha-yaml-editor",
   "ha-card",
-  "ha-fab",
   "ha-alert",
   "ha-svg-icon",
   "ha-icon-button",
   "ha-menu-button",
   "ha-switch",
   "ha-formfield",
-  "ha-textfield",
 ];
 
 @customElement("switch-manager-panel")

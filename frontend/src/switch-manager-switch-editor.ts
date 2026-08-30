@@ -24,6 +24,7 @@ import {
 
 import "./switch-manager-button-actions";
 import "./switch-manager-menu";
+import "./switch-manager-fab";
 
 // MDI icon paths
 const mdiArrowLeft =
@@ -229,16 +230,17 @@ export class SwitchManagerSwitchEditor extends LitElement {
                                 ></ha-switch>
                               </ha-formfield>
                               ${this._currentAction()?.loop
-                                ? html`<ha-textfield
-                                    id="loop-interval"
-                                    type="number"
-                                    label="Interval (ms)"
-                                    min="50"
-                                    max="5000"
-                                    step="50"
-                                    .value=${String(this._currentAction()?.loop_interval ?? 250)}
-                                    @change=${this._loopIntervalChanged}
-                                  ></ha-textfield>`
+                                ? html`<label id="loop-interval">
+                                    <span>Interval (ms)</span>
+                                    <input
+                                      type="number"
+                                      min="50"
+                                      max="5000"
+                                      step="50"
+                                      .value=${String(this._currentAction()?.loop_interval ?? 250)}
+                                      @change=${this._loopIntervalChanged}
+                                    />
+                                  </label>`
                                 : nothing}
                             </span>
                           `
@@ -276,16 +278,13 @@ export class SwitchManagerSwitchEditor extends LitElement {
 
           ${hasError ? nothing : html`
             <div class="fab-container">
-              <ha-fab
-                slot="fab"
-                .label=${"Save"}
-                extended
+              <switch-manager-fab
+                label="Save"
+                .path=${mdiSave}
                 collapse
                 @click=${this._save}
                 class=${classMap({ dirty: this._dirty, blocked: this._block_save })}
-              >
-                <ha-svg-icon slot="icon" .path=${mdiSave}></ha-svg-icon>
-              </ha-fab>
+              ></switch-manager-fab>
             </div>
           `}
         </div>
@@ -899,7 +898,22 @@ export class SwitchManagerSwitchEditor extends LitElement {
       vertical-align: middle;
     }
     #loop-interval {
-      width: 130px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #loop-interval input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid var(--divider-color, rgba(127, 127, 127, 0.3));
+      border-radius: 6px;
+      background: var(--secondary-background-color, transparent);
+      color: var(--primary-text-color);
+      font: inherit;
+    }
+    #loop-interval input:focus {
+      outline: none;
+      border-color: var(--primary-color);
     }
     #switch-image > svg {
       overflow: visible;
@@ -942,17 +956,17 @@ export class SwitchManagerSwitchEditor extends LitElement {
       padding: 1.2em;
       z-index: 1;
     }
-    ha-fab {
+    switch-manager-fab {
       position: relative;
     }
-    ha-fab[collapse] {
+    switch-manager-fab[collapse] {
       bottom: calc(-80px - env(safe-area-inset-bottom));
       transition: bottom 0.3s;
     }
-    ha-fab.dirty {
+    switch-manager-fab.dirty {
       bottom: 0;
     }
-    ha-fab.blocked {
+    switch-manager-fab.blocked {
       bottom: calc(-80px - env(safe-area-inset-bottom));
     }
   `;

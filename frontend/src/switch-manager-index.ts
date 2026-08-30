@@ -19,6 +19,7 @@ import {
 
 import "./dialogs/blueprint-selector";
 import "./switch-manager-menu";
+import "./switch-manager-fab";
 
 // MDI icon paths
 const mdiPlus = "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
@@ -253,14 +254,11 @@ export class SwitchManagerIndex extends LitElement {
               </div>
             </div>
             <div class="fab-container">
-              <ha-fab
-                slot="fab"
-                .label=${"Add Switch"}
-                extended
+              <switch-manager-fab
+                label="Add Switch"
+                .path=${mdiPlus}
                 @click=${this._showBlueprintDialog}
-              >
-                <ha-svg-icon slot="icon" .path=${mdiPlus}></ha-svg-icon>
-              </ha-fab>
+              ></switch-manager-fab>
             </div>
           </div>
       </div>
