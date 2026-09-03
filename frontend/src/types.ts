@@ -65,6 +65,7 @@ export interface Blueprint {
   mqtt_topic_format?: string;
   mqtt_sub_topics?: boolean;
   is_mqtt?: boolean;
+  is_zigbee2mqtt?: boolean;
   is_event_entity?: boolean;
   conditions: unknown[];
   buttons: BlueprintButton[];

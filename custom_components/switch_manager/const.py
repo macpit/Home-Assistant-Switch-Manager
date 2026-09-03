@@ -23,3 +23,6 @@ LOOP_INTERVAL_MIN = 50
 LOOP_INTERVAL_MAX = 5000
 
 LOGGER = logging.getLogger(__name__)
+# Base topic Zigbee2MQTT ships with; blueprints use it in mqtt_topic_format.
+# Discovery swaps it for the base topics of the instances actually running.
+ZIGBEE2MQTT_DEFAULT_BASE_TOPIC = 'zigbee2mqtt'
