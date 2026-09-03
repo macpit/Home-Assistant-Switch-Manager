@@ -134,6 +134,8 @@ You can either enter the identifier manually or use the auto discovery button th
 
 Zigbee2MQTT blueprints are written for the default base topic `zigbee2mqtt`. The identifier dialog looks up the Zigbee2MQTT instances actually running on your broker (via their retained `<base_topic>/bridge/state` message) and offers them in a **Zigbee2MQTT instance** dropdown. By default discovery listens on **all** detected instances, so a renamed base topic (e.g. `zigbee2mqtt1_wz`) or several coordinators work out of the box; pick a single instance to narrow it down, or **Custom base topic...** to type one yourself. If no instance is detected (e.g. Zigbee2MQTT has never been online since the broker started) the dialog falls back to the blueprint default.
 
+<p align="center"><img src="images/v5-zigbee2mqtt-instances.png" width="60%" alt="Identifier dialog with the Zigbee2MQTT instance dropdown listing all detected coordinators" /></p>
+
 **For other MQTT services (e.g. Tasmota): if you have changed the default MQTT base topic and are using a blueprint provided by Switch Manager, enter the topic manually as discovery listens on the default topic only.**
 
 ##### Don't know event value
