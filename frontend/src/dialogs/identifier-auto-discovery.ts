@@ -335,6 +335,7 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
     }
     .identifier-ref.hint {
       margin-top: 8px;
+    }
     .error {
       margin-top: 8px;
       font-size: 0.9em;

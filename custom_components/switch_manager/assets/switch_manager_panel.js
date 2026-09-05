@@ -1217,6 +1217,7 @@ function t(t,e,i,s){var o,r=arguments.length,n=r<3?e:null===s?s=Object.getOwnPro
     }
     .identifier-ref.hint {
       margin-top: 8px;
+    }
     .error {
       margin-top: 8px;
       font-size: 0.9em;
