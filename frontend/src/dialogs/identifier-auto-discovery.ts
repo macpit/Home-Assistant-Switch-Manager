@@ -20,6 +20,7 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
   @state() private _instanceChoice: string = INSTANCE_ALL;
   @state() private _customBaseTopic = "";
   @state() private _instancesLoading = false;
+  @state() private _error = "";
   private _unsubscribe?: () => void;
   private hass!: HomeAssistant;
 
@@ -30,6 +31,7 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
     this._instances = [];
     this._instanceChoice = INSTANCE_ALL;
     this._customBaseTopic = "";
+    this._error = "";
     this.hass =
       (this.parentElement as any)?.hass ||
       (document.querySelector("home-assistant") as any)?.hass;
@@ -114,6 +116,9 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
               ...this._discovered,
               { identifier: msg.identifier, name: msg.name },
             ];
+            // Auto-fill the first discovered device so the user doesn't have
+            // to know that the list entry must be tapped (#71).
+            if (!this._identifier) this._selectIdentifier(msg.identifier);
           }
         },
         {
@@ -146,9 +151,12 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
             type="text"
             placeholder="Identifier"
             .value=${this._identifier}
-            @input=${(e: InputEvent) =>
-              (this._identifier = (e.target as HTMLInputElement).value)}
+            @input=${(e: InputEvent) => {
+              this._identifier = (e.target as HTMLInputElement).value;
+              this._error = "";
+            }}
           />
+          ${this._error ? html`<div class="error">${this._error}</div>` : ""}
 
           ${this._params.blueprint?.event_type === "event_entity"
             ? html`<div class="identifier-ref">
@@ -195,7 +203,9 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
                           ${this._discovered.map(
                             (d) => html`
                               <div
-                                class="list-item"
+                                class="list-item ${d.identifier === this._identifier
+                                  ? "selected"
+                                  : ""}"
                                 @click=${() => this._selectIdentifier(d.identifier)}
                               >
                                 ${d.name
@@ -262,10 +272,19 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
 
   private _selectIdentifier(id: string) {
     this._identifier = id;
+    this._error = "";
   }
 
   private _save() {
-    this._params?.update?.({ identifier: this._identifier });
+    const identifier = this._identifier.trim();
+    if (!identifier) {
+      // Don't close silently with an empty identifier: the editor would only
+      // re-open this dialog on the next save, which looks like a loop (#71).
+      this._error =
+        "Enter an identifier or press a button on the switch and select it below.";
+      return;
+    }
+    this._params?.update?.({ identifier });
     this.closeDialog();
   }
 
@@ -316,6 +335,10 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
     }
     .identifier-ref.hint {
       margin-top: 8px;
+    .error {
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: var(--error-color, #db4437);
     }
     .identifier-ref {
       margin-top: 16px;
@@ -337,6 +360,12 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
       cursor: pointer;
       padding: 12px 8px;
       border-radius: 4px;
+      border: 1px solid var(--divider-color, rgba(127, 127, 127, 0.3));
+      margin-top: 4px;
+    }
+    .list-item.selected {
+      border-color: var(--primary-color);
+      background: var(--secondary-background-color, rgba(127, 127, 127, 0.1));
     }
     .list-item-sub {
       display: block;
