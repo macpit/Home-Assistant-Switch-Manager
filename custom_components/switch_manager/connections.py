@@ -13,7 +13,7 @@ from homeassistant.helpers.script import Script
 from .schema import SWITCH_MANAGER_CONFIG_SCHEMA
 from .helpers import _get_blueprint, _get_switch_config, _remove_switch_config, _set_switch_config
 from .const import DOMAIN, CONF_BLUEPRINTS, CONF_MANAGED_SWITCHES, CONF_STORE
-from .models import ManagedSwitchConfig, reconcile_buttons_with_blueprint
+from .models import ManagedSwitchConfig, reconcile_buttons_with_blueprint, async_discover_zigbee2mqtt_instances
 
 async def async_setup_connections( hass ):
   
@@ -35,7 +35,9 @@ async def async_setup_connections( hass ):
 
     @websocket_api.websocket_command({
         vol.Required("type"): "switch_manager/blueprints/auto_discovery", 
-        vol.Optional("blueprint_id"): cv.string
+        vol.Optional("blueprint_id"): cv.string,
+        # Zigbee2MQTT base topics to listen on instead of the blueprint default
+        vol.Optional("base_topics"): [cv.string]
     })
     @websocket_api.async_response
     async def websocket_blueprint_auto_discovery(
@@ -48,7 +50,7 @@ async def async_setup_connections( hass ):
         def send( data ):
             connection.send_message(event_message(msg["id"], data))
 
-        discovery_listener = await blueprint.start_discovery(send)
+        discovery_listener = await blueprint.start_discovery(send, msg.get('base_topics'))
         if not discovery_listener:
             return
 
@@ -58,6 +60,19 @@ async def async_setup_connections( hass ):
         
         connection.subscriptions[msg["id"]] = close_connection
         connection.send_result(msg["id"])
+
+    @websocket_api.websocket_command({
+        vol.Required("type"): "switch_manager/zigbee2mqtt/instances"
+    })
+    @websocket_api.async_response
+    async def websocket_zigbee2mqtt_instances(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
+    ) -> None:
+        """List the base topics of all Zigbee2MQTT instances seen on the broker."""
+        instances = await async_discover_zigbee2mqtt_instances(hass)
+        connection.send_result(msg["id"], { "instances": instances })
 
     @websocket_api.websocket_command({
         vol.Required("type"): "switch_manager/configs", 
@@ -280,6 +295,7 @@ async def async_setup_connections( hass ):
     websocket_api.async_register_command(hass, websocket_configs)
     websocket_api.async_register_command(hass, websocket_blueprints)
     websocket_api.async_register_command(hass, websocket_blueprint_auto_discovery)
+    websocket_api.async_register_command(hass, websocket_zigbee2mqtt_instances)
     websocket_api.async_register_command(hass, websocket_monitor_config)
     websocket_api.async_register_command(hass, websocket_save_config)
     websocket_api.async_register_command(hass, websocket_toggle_config_enabled)
