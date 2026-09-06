@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import type { HomeAssistant, Blueprint, BlueprintsResponse } from "../types";
-import { wsType, navigateTo, navigate, assetUrl } from "../helpers";
+import { wsType, navigateTo, navigate, assetUrl, notifyDialogClosed } from "../helpers";
 import "../switch-manager-dialog";
 
 @customElement("switch-manager-dialog-blueprint-selector")
@@ -19,10 +19,12 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
   }
 
   public closeDialog() {
+    if (!this._params) return;
     this._params = undefined;
     this._blueprints = [];
     this._filter = "";
     this._protocol = "";
+    notifyDialogClosed(this);
   }
 
   private _protoKey(bp: Blueprint): string {
@@ -114,8 +116,11 @@ export class SwitchManagerDialogBlueprintSelector extends LitElement {
   }
 
   private _selectBlueprint(bp: Blueprint) {
-    this.closeDialog();
+    // Navigate first: once the URL changed, HA's dialog manager no longer sees
+    // this dialog in the history state and won't fire a history.back() that
+    // would undo the navigation.
     navigate(navigateTo(`new/${bp.id}`));
+    this.closeDialog();
   }
 
   static styles = css`

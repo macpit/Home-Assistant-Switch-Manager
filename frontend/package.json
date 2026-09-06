@@ -8,7 +8,6 @@
     "watch": "rollup -c --watch"
   },
   "dependencies": {
-    "@kipk/load-ha-components": "^1.0.3",
     "lit": "^3.2.0"
   },
   "devDependencies": {

@@ -12,6 +12,11 @@ const mdiClose =
 export class SwitchManagerDialog extends LitElement {
   @property() heading = "";
 
+  // Where the last pointer press started: selecting text with the mouse and
+  // releasing outside the surface makes Chrome fire the resulting click on
+  // the backdrop, which must not dismiss the dialog (#76).
+  private _pressOnBackdrop = false;
+
   private _onKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") this._close();
   };
@@ -27,7 +32,11 @@ export class SwitchManagerDialog extends LitElement {
 
   render() {
     return html`
-      <div class="backdrop" @click=${this._close}>
+      <div
+        class="backdrop"
+        @pointerdown=${this._onBackdropPress}
+        @click=${this._onBackdropClick}
+      >
         <div class="surface" @click=${this._stop}>
           <div class="header">
             <span class="title">${this.heading}</span>
@@ -46,6 +55,14 @@ export class SwitchManagerDialog extends LitElement {
 
   private _stop(e: Event) {
     e.stopPropagation();
+  }
+  private _onBackdropPress(e: PointerEvent) {
+    this._pressOnBackdrop = e.target === e.currentTarget;
+  }
+  private _onBackdropClick(e: MouseEvent) {
+    const pressOnBackdrop = this._pressOnBackdrop;
+    this._pressOnBackdrop = false;
+    if (e.target === e.currentTarget && pressOnBackdrop) this._close();
   }
   private _close() {
     this.dispatchEvent(new CustomEvent("closed"));

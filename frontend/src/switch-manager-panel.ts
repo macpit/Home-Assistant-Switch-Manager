@@ -1,6 +1,6 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { loadHaComponents } from "@kipk/load-ha-components";
+import { loadHaComponents } from "./load-ha-components";
 import type { HomeAssistant, Panel, Route } from "./types";
 
 import "./switch-manager-index";
