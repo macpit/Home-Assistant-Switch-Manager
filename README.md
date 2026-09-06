@@ -385,7 +385,7 @@ buttons:
 
 MQTT is handled differently to events and the incoming data is that of a payload... If a payload is not json formatted then it will be passed in as the key `payload` containing the string. The payload itself is what the conditions will check against. Included in the data is topic and topic_basename as this can be useful for condtions where a topic is listened via `#` or `+`.
 
-To help discover a switch when trying to discover from GUI then use a format for the topic in `mqtt_topic_format` that will scope down to the best possibility. For zigbee2mqtt this is generally `zigbee2mqtt/+/action`. The `+` is a wild card saying to match a single level (so anything between the forward slash `/`). For more information visit [here](https://www.hivemq.com/blog/mqtt-essentials-part-5-mqtt-topics-best-practices/). Sharing blueprints should be set to the default topic of the integration and not one that you have changed to. 
+To help discover a switch when trying to discover from GUI then use a format for the topic in `mqtt_topic_format` that will scope down to the best possibility. For zigbee2mqtt this is generally `zigbee2mqtt/+/action`. Blueprints with that format also receive the `action` key from the device's state topic `zigbee2mqtt/<device>` as `payload` (see [troubleshooting](#a-zigbee2mqtt-switch-is-never-discovered--does-nothing)), so they work whether or not Zigbee2MQTT's Home Assistant integration republishes to `/action`. The `+` is a wild card saying to match a single level (so anything between the forward slash `/`). For more information visit [here](https://www.hivemq.com/blog/mqtt-essentials-part-5-mqtt-topics-best-practices/). Sharing blueprints should be set to the default topic of the integration and not one that you have changed to. 
 
 If you want a condition on a payload that isn't json formatted then you would do as follows:
 ```yaml
@@ -500,15 +500,11 @@ You only see the mismatch error when a blueprint *dropped* buttons or actions, b
 
 #### A Zigbee2MQTT switch is never discovered / does nothing
 
-Most Zigbee2MQTT blueprints listen on `zigbee2mqtt/<device>/action`. That topic is not published by Zigbee2MQTT itself — it is republished by its **Home Assistant integration**, so it only exists when in Zigbee2MQTT:
+Most Zigbee2MQTT blueprints are written for `zigbee2mqtt/<device>/action`. That topic is not published by Zigbee2MQTT itself — it is republished by its **Home Assistant integration**, so it only exists when in Zigbee2MQTT the Home Assistant integration is **enabled** (`homeassistant.enabled: true`) and `advanced.output` is `json` (the default). The `legacy_action_sensor` option is unrelated.
 
-* the Home Assistant integration is **enabled** (`homeassistant.enabled: true`), and
-* `advanced.output` is `json` (the default — with `attribute` the integration refuses to start), and
-* the device is a supported one, not defined as a custom/unknown device.
+Since v5.3.0 this no longer matters for the switch itself: for `/action` blueprints Switch Manager also listens on the device's state topic `zigbee2mqtt/<device>` and uses the `action` key of its JSON payload (`{"action": "1_single", ...}`) as if it had arrived on `/action`. When Zigbee2MQTT publishes both, the second copy of a press is dropped, and retained state messages are ignored so a restart never replays the last press. The identifier of such a switch stays `zigbee2mqtt/<device>/action`, and auto discovery finds the device either way.
 
-You can check with any MQTT client (or the Zigbee2MQTT frontend) whether pressing the button publishes anything on `zigbee2mqtt/<device>/action`. If the device only publishes its state on `zigbee2mqtt/<device>`, none of the `/action` blueprints can ever match.
-
-The `legacy_action_sensor` option is unrelated to this topic even though toggling it has been reported to help — toggling it restarts Zigbee2MQTT, which is the more likely reason.
+If a switch still does nothing, check with any MQTT client (or the Zigbee2MQTT frontend) that pressing the button publishes on `zigbee2mqtt/<device>` (or `.../action`) at all, and that the topic matches the identifier of the switch, including the base topic (see [Zigbee2MQTT base topic](#zigbee2mqtt-base-topic--multiple-instances)).
 
 #### The panel looks unchanged after an update
 

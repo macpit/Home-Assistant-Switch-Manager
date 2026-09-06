@@ -1,5 +1,6 @@
 import time
 import re
+import json
 import copy
 import asyncio
 from .const import DOMAIN, LOGGER, LOOP_MAX_SECONDS, LOOP_INTERVAL_DEFAULT, ZIGBEE2MQTT_DEFAULT_BASE_TOPIC
@@ -223,11 +224,69 @@ def replace_mqtt_base_topic( topic_format: str, base_topic: str ) -> str:
     _, _, rest = topic_format.partition('/')
     return f"{base_topic.strip('/')}/{rest}" if rest else base_topic.strip('/')
 
+# Zigbee2MQTT only republishes a button press to '<device>/action' when its Home
+# Assistant integration is enabled (and 'advanced.output' is json). The press is
+# always part of the JSON on the state topic '<device>' though, so blueprints
+# written for the '/action' topic also listen there and treat the 'action' key
+# as if it had arrived on '/action'. When Zigbee2MQTT publishes both, the second
+# copy of the same press is dropped (#77).
+ZIGBEE2MQTT_ACTION_SUFFIX = '/action'
+ZIGBEE2MQTT_DUPLICATE_WINDOW = 1.0  # seconds between the state and the /action copy
+
+def uses_zigbee2mqtt_action_topic( blueprint ) -> bool:
+    return bool(
+        blueprint.is_zigbee2mqtt
+        and blueprint.mqtt_topic_format.endswith( ZIGBEE2MQTT_ACTION_SUFFIX )
+    )
+
+def action_from_zigbee2mqtt_state( message: ReceiveMessage ):
+    """Return the 'action' of a Zigbee2MQTT state message, or None."""
+    if message.retain:
+        # A retained state would replay the last press whenever we (re)subscribe.
+        return None
+    try:
+        data = json.loads( message.payload )
+    except (ValueError, TypeError):
+        return None
+    if not isinstance( data, dict ):
+        return None
+    action = data.get( 'action' )
+    if not isinstance( action, str ) or not action:
+        return None
+    return action
+
 async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _callback ):
+    action_topics = blueprint.is_mqtt and uses_zigbee2mqtt_action_topic( blueprint )
+    # (topic, payload) -> (source, monotonic time) of the last press, to drop the
+    # copy that arrives on the other topic within the duplicate window.
+    recent_presses = {}
+
+    def _dispatch( data, source ):
+        if action_topics:
+            now = time.monotonic()
+            for key in [ k for k, v in recent_presses.items() if now - v[1] >= ZIGBEE2MQTT_DUPLICATE_WINDOW ]:
+                del recent_presses[key]
+            key = ( data.get('topic'), data.get('payload') )
+            previous = recent_presses.get( key )
+            if previous and previous[0] != source:
+                del recent_presses[key]
+                return
+            recent_presses[key] = ( source, now )
+        _callback( data, Context() )
+
     @callback
     def _handleMQTT( message: ReceiveMessage ):
-        data = format_mqtt_message(message)
-        _callback( data.copy(), Context() )
+        if action_topics and not message.topic.endswith( ZIGBEE2MQTT_ACTION_SUFFIX ):
+            action = action_from_zigbee2mqtt_state( message )
+            if action is None:
+                return
+            _dispatch( {
+                'payload': action,
+                'topic': f"{message.topic}{ZIGBEE2MQTT_ACTION_SUFFIX}",
+                'topic_basename': 'action'
+            }, 'state' )
+            return
+        _dispatch( format_mqtt_message(message).copy(), 'action' )
     
     @callback
     def _handleEvent( event ):
@@ -247,6 +306,12 @@ async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _c
     elif blueprint.is_mqtt:
         try:
             listeners.append( await mqtt_subscribe(hass, mqtt_topic, _handleMQTT) )
+            if action_topics and mqtt_topic.endswith( ZIGBEE2MQTT_ACTION_SUFFIX ):
+                # A switch listens on its '<device>/action' identifier; discovery
+                # subscribes to '<base>/#' and already receives the state topic.
+                listeners.append( await mqtt_subscribe(
+                    hass, mqtt_topic[:-len(ZIGBEE2MQTT_ACTION_SUFFIX)], _handleMQTT
+                ) )
             if blueprint.mqtt_sub_topics:
                 listeners.append( await mqtt_subscribe(hass, f"{mqtt_topic}/#", _handleMQTT) )
         except HomeAssistantError:
