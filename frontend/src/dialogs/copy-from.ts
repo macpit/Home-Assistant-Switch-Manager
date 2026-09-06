@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import type { HomeAssistant, SwitchConfig, CopyFromResponse } from "../types";
-import { wsType } from "../helpers";
+import { wsType, notifyDialogClosed } from "../helpers";
 import "../switch-manager-dialog";
 
 @customElement("switch-manager-dialog-copy-from")
@@ -20,9 +20,12 @@ export class SwitchManagerDialogCopyFrom extends LitElement {
   }
 
   public closeDialog() {
-    this._params?.onClose?.();
+    if (!this._params) return;
+    const params = this._params;
     this._params = undefined;
     this._switches = [];
+    params.onClose?.();
+    notifyDialogClosed(this);
   }
 
   private async _loadSwitches() {

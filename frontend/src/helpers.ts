@@ -60,6 +60,15 @@ export function fireEvent(
   node.dispatchEvent(event);
 }
 
+// Tell HA's dialog manager that a dialog closed. HA keeps a stack of open
+// dialogs plus a history entry per dialog; without this event the stack grows
+// with every dialog we open and a later HA navigation closes all of them at
+// once (#76). Must be fired after any follow-up dialog has been shown, so the
+// history state already points at the new dialog.
+export function notifyDialogClosed(node: HTMLElement): void {
+  fireEvent(node, "dialog-closed", { dialog: node.localName });
+}
+
 export function showToast(node: HTMLElement, message: string): void {
   fireEvent(node, "hass-notification", { message });
 }

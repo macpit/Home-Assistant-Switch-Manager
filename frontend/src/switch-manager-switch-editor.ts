@@ -712,6 +712,9 @@ export class SwitchManagerSwitchEditor extends LitElement {
         switch_id: this.config?.id,
         identifier: this.config?.identifier,
         blueprint: this.blueprint,
+        // Opened because Save was pressed without an identifier: tell the
+        // user why the dialog is back instead of looking like a loop (#76).
+        required: continueSave,
         update: (data: { identifier: string }) => {
           this.config!.identifier = data.identifier;
           this._dirty = true;

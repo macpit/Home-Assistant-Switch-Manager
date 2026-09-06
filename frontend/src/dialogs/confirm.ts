@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import "../switch-manager-dialog";
+import { notifyDialogClosed } from "../helpers";
 
 @customElement("switch-manager-dialog-confirm")
 export class SwitchManagerDialogConfirm extends LitElement {
@@ -11,7 +12,9 @@ export class SwitchManagerDialogConfirm extends LitElement {
   }
 
   public closeDialog() {
+    if (!this._params) return;
     this._params = undefined;
+    notifyDialogClosed(this);
   }
 
   render() {

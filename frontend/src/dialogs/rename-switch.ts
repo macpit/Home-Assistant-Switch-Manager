@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import "../switch-manager-dialog";
+import { notifyDialogClosed } from "../helpers";
 
 @customElement("switch-manager-dialog-rename-switch")
 export class SwitchManagerDialogRenameSwitch extends LitElement {
@@ -13,8 +14,11 @@ export class SwitchManagerDialogRenameSwitch extends LitElement {
   }
 
   public closeDialog() {
-    this._params?.onClose?.();
+    if (!this._params) return;
+    const params = this._params;
     this._params = undefined;
+    params.onClose?.();
+    notifyDialogClosed(this);
   }
 
   render() {

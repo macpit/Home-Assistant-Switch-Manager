@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import type { HomeAssistant, Blueprint } from "../types";
-import { wsType } from "../helpers";
+import { wsType, notifyDialogClosed } from "../helpers";
 import "../switch-manager-dialog";
 
 const INSTANCE_ALL = "__all__";
@@ -95,9 +95,12 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
   }
 
   public closeDialog() {
+    if (!this._params) return;
     this._stopDiscovery();
-    this._params?.onClose?.();
+    const params = this._params;
     this._params = undefined;
+    params.onClose?.();
+    notifyDialogClosed(this);
   }
 
   private async _startDiscovery() {
@@ -157,6 +160,13 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
             }}
           />
           ${this._error ? html`<div class="error">${this._error}</div>` : ""}
+          ${this._params.required && !this._identifier
+            ? html`<div class="identifier-ref hint">
+                A switch needs an identifier before it can be saved. Press a
+                button on the switch and pick it from the list below, or type
+                the identifier yourself.
+              </div>`
+            : ""}
 
           ${this._params.blueprint?.event_type === "event_entity"
             ? html`<div class="identifier-ref">
