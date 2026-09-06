@@ -99,12 +99,12 @@ export class SwitchManagerSwitchEditor extends LitElement {
           <div
             class="menu-item"
             ?disabled=${!this.config || hasError}
-            @click=${this._showIdentifierAutoDiscoveryDialog}
+            @click=${() => this._showIdentifierAutoDiscoveryDialog()}
           >
             <ha-svg-icon .path=${mdiIdentifier}></ha-svg-icon>
             Identifier
           </div>
-          <div class="menu-item" @click=${this._showRenameDialog}>
+          <div class="menu-item" @click=${() => this._showRenameDialog()}>
             <ha-svg-icon .path=${mdiRename}></ha-svg-icon>
             Rename
           </div>
@@ -341,7 +341,7 @@ export class SwitchManagerSwitchEditor extends LitElement {
       if ("blueprint" in this.params) {
         this._loadBlueprint(this.params.blueprint).then((res) => {
           this._setConfig(createEmptyConfig(res.blueprint!));
-          this._showRenameDialog();
+          this._showRenameDialog(true);
         });
       }
     }
@@ -503,7 +503,7 @@ export class SwitchManagerSwitchEditor extends LitElement {
       // Opened from the save flow: once an identifier is set, continue the
       // interrupted save so it is actually persisted (fixes the popup
       // re-appearing on every save when the stored identifier is empty).
-      this._showIdentifierAutoDiscoveryDialog(true);
+      this._showIdentifierAutoDiscoveryDialog({ continueSave: true });
       return false;
     }
     return true;
@@ -703,7 +703,12 @@ export class SwitchManagerSwitchEditor extends LitElement {
     );
   }
 
-  private _showIdentifierAutoDiscoveryDialog(continueSave = false) {
+  // continueSave: opened because Save was pressed without an identifier.
+  // creating: the identifier step of a brand-new switch (after the rename).
+  private _showIdentifierAutoDiscoveryDialog({
+    continueSave = false,
+    creating = false,
+  }: { continueSave?: boolean; creating?: boolean } = {}) {
     showDialog(
       this,
       "switch-manager-dialog-identifier-auto-discovery",
@@ -723,12 +728,18 @@ export class SwitchManagerSwitchEditor extends LitElement {
           // immediately instead of forcing the user to press Save again.
           if (continueSave && data.identifier) this._save();
         },
-        onClose: () => {},
+        onClose: (saved: boolean) => {
+          // Cancelling the identifier step of a new switch abandons it: without
+          // an identifier it cannot be saved anyway, and the user asked to
+          // cancel rather than to continue (#76).
+          if (creating && !saved && !this.config?.identifier) navigate(navigateTo());
+        },
       }
     );
   }
 
-  private _showRenameDialog() {
+  // creating: first rename right after picking a blueprint for a new switch.
+  private _showRenameDialog(creating = false) {
     showDialog(
       this,
       "switch-manager-dialog-rename-switch",
@@ -740,8 +751,12 @@ export class SwitchManagerSwitchEditor extends LitElement {
           this._dirty = true;
           this.requestUpdate();
         },
-        onClose: () => {
-          if (this.is_new) this._showIdentifierAutoDiscoveryDialog();
+        onClose: (saved: boolean) => {
+          if (!creating) return;
+          // Save continues with the identifier step; Cancel/ESC/backdrop
+          // abandons the new switch instead of moving on (#76).
+          if (saved) this._showIdentifierAutoDiscoveryDialog({ creating: true });
+          else navigate(navigateTo());
         },
       }
     );

@@ -95,11 +95,16 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
   }
 
   public closeDialog() {
+    this._close(false);
+  }
+
+  // onClose(saved) lets the caller tell Save from Cancel/ESC/backdrop (#76).
+  private _close(saved: boolean) {
     if (!this._params) return;
     this._stopDiscovery();
     const params = this._params;
     this._params = undefined;
-    params.onClose?.();
+    params.onClose?.(saved);
     notifyDialogClosed(this);
   }
 
@@ -295,7 +300,7 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
       return;
     }
     this._params?.update?.({ identifier });
-    this.closeDialog();
+    this._close(true);
   }
 
   static styles = css`
