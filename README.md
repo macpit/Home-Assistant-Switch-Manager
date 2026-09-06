@@ -28,7 +28,9 @@ We're looking for community input on what to build next! Vote by opening an [iss
 | Visual Blueprint Editor | Create blueprints in the GUI instead of writing YAML by hand ([PR #39](https://github.com/macpit/Home-Assistant-Switch-Manager/pull/39)) | In progress |
 | Action Test Buttons in switch config | Fire a single configured action from the switch view ([#50](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/50)) | Planned |
 | Switch Groups | Apply one configuration to several physical switches ([#45](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/45)) | Idea |
-| Blueprint Import via URL/YAML | Import community blueprints directly from a URL or paste YAML — no manual file copying | Idea |
+| Blueprint Import via URL/YAML | Import community blueprints directly from a URL or paste YAML — no manual file copying ([#77](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/77)) | Idea |
+| External blueprint repositories | Subscribe to community blueprint repos (GitHub repo or gist) HACS-style, so blueprints don't have to live in this repo ([#77](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/77)) | Idea |
+| "View on GitHub" link per blueprint | Link from the blueprint picker to the blueprint's YAML in this repo for issues and PRs ([#77](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/77)) | Idea |
 | Backup / Export | Export and import switch configurations as YAML for migration or backup | Idea |
 | Search & replace on clone | Replace device/entity IDs when duplicating a switch ([#4](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/4)) | Idea |
 | Repeat until release | Hold to dim: an action repeats its sequence until the button's release event arrives ([#27](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/27)) | **Done (v5.1.0)** |
