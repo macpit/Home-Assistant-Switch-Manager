@@ -2,11 +2,12 @@
 // HA's own config/automation route loaders, so the editor uses the components
 // of the running HA instead of a frozen copy.
 //
-// Adapted from @kipk/load-ha-components 1.0.3 (MIT). The temporary
-// partial-panel-resolver gets a hass stub that is complete enough for
-// HA >= 2026.8, which reads hass.auth and hass.config after loading a route
-// and otherwise logs "Cannot read properties of undefined (reading 'external')"
-// in the browser console (#76).
+// Adapted from @kipk/load-ha-components 1.0.3 (MIT). That library called the
+// async _updateRoutes() of a throw-away partial-panel-resolver, which since
+// HA 2026.8 goes on to read hass.auth / hass.panels[currentPage] and rejects
+// with "Cannot read properties of undefined" in the console (#76). We only
+// need the route table, so ask _getRoutes() for it directly (stable from
+// HA 2025.4 to 2026.9) and fall back to _updateRoutes() with a fuller stub.
 
 const TIMEOUT_MS = 10000;
 
@@ -27,16 +28,18 @@ export async function loadHaComponents(components: string[]): Promise<void> {
     "waiting for partial-panel-resolver"
   );
   const resolver = document.createElement("partial-panel-resolver") as any;
-  resolver.hass = {
-    panels: [{ url_path: "tmp", component_name: "config" }],
-    auth: {},
-    config: { state: "RUNNING" },
-  };
-  if (typeof resolver._updateRoutes !== "function") {
-    throw new Error("partial-panel-resolver has no _updateRoutes method");
+  const panels = [{ url_path: "tmp", component_name: "config" }];
+  let routerOptions: any;
+  if (typeof resolver._getRoutes === "function") {
+    routerOptions = resolver._getRoutes(panels);
+  } else if (typeof resolver._updateRoutes === "function") {
+    resolver.hass = { panels, auth: {}, config: { state: "RUNNING" } };
+    resolver._updateRoutes();
+    routerOptions = resolver.routerOptions;
+  } else {
+    throw new Error("partial-panel-resolver has neither _getRoutes nor _updateRoutes");
   }
-  resolver._updateRoutes();
-  const tmpRoute = resolver.routerOptions?.routes?.tmp;
+  const tmpRoute = routerOptions?.routes?.tmp;
   if (!tmpRoute?.load) throw new Error("no tmp route in partial-panel-resolver");
   await withTimeout(tmpRoute.load(), "loading the config panel");
 
