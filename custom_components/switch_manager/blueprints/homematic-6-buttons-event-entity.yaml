@@ -1,11 +1,14 @@
-name: HomeMatic 6 Buttons (Event Entity)
-service: HomeMatic
+name: Homematic 6 Buttons (Event Entity)
+service: Homematic
 event_type: event_entity
 identifier_key: device_id
 info: >-
-  This blueprint is for HomeMatic remotes exposed as event.* entities (e.g. via Matter or
-  HomeMatic Cloud). Each button corresponds to an entity whose state changes on press.
-  Button index is derived from the entity's unique id.
+  Uses the event.* entities that Homematic(IP) Local creates for each button channel
+  instead of the homematic.keypress bus event, so it keeps working when the bus events
+  do not arrive (see issue #72). Identifier is the Home Assistant device id of the remote.
+  Channel 1 is entity_index 0 (top left), channels count row by row. Hold matches
+  press_long_start (Homematic IP); classic BidCos-RF devices (HM-...) only send press_long,
+  use the "Homematic 6 Buttons" bus event blueprint for those.
 buttons:
   - x: 85
     y: 85

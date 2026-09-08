@@ -356,7 +356,7 @@ conditions:
 
 ### Event entities (Matter)
 
-Matter remotes (and some other integrations such as Hue or Zigbee2MQTT with HA discovery) do not fire a bus event. Each button is an `event.*` entity whose state changes on every press while `attributes.event_type` says what happened. Blueprints with `event_type: event_entity` listen to those state changes; the switch identifier is the Home Assistant **device id** of the remote (auto discovery shows the device name, just press a button) and the data the conditions see is:
+Matter remotes (and some other integrations such as Hue, Zigbee2MQTT with HA discovery or Homematic(IP) Local) do not fire a bus event, or not only one. Each button is an `event.*` entity whose state changes on every press while `attributes.event_type` says what happened. Homematic(IP) Local creates one event entity per button channel next to its `homematic.keypress` bus event; the `Homematic … (Event Entity)` blueprints use those and keep working when the bus events do not arrive (see [#72](https://github.com/macpit/Home-Assistant-Switch-Manager/issues/72)). Blueprints with `event_type: event_entity` listen to those state changes; the switch identifier is the Home Assistant **device id** of the remote (auto discovery shows the device name, just press a button) and the data the conditions see is:
 
 Key             | Details
 --              | -
@@ -364,7 +364,7 @@ event_type      | The event, e.g. `multi_press_1`, `multi_press_2`, `long_press`
 presses         | Press / notch count of the event (`totalNumberOfPressesCounted` or the `N` in `multi_press_N`), default 1. Used by `scale_field` and `repeat`
 entity_id, device_id, unique_id, original_name, platform | Registry details of the entity that fired
 endpoint        | Matter endpoint number parsed from the unique id (`None` for non Matter entities). Handy to tell buttons apart, see the BILRESA blueprints
-entity_index    | 0 based position of the entity among the device's `event.*` entities, ordered by endpoint. Stable even when the user renames entities
+entity_index    | 0 based position of the entity among the device's `event.*` entities, ordered by Matter endpoint or otherwise by unique id with numbers compared numerically (channel 2 before channel 10). Stable even when the user renames entities
 attributes      | All remaining entity attributes are also available at the top level (e.g. `previousPosition`, `newPosition`)
 
 ```yaml
