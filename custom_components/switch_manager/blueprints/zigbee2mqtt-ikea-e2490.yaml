@@ -1,0 +1,43 @@
+# BILRESA scroll wheel (E2490) in Zigbee mode, paired with Zigbee2MQTT.
+# For the Matter mode use the "IKEA BILRESA Scroll Wheel" Matter blueprint.
+# https://www.zigbee2mqtt.io/devices/E2490.html
+
+name: IKEA BILRESA Scroll Wheel (Zigbee2MQTT)
+service: Zigbee2MQTT
+event_type: mqtt
+mqtt_topic_format: zigbee2mqtt/+
+info: >-
+  BILRESA scroll wheel (E2490) paired with Zigbee2MQTT, i.e. switched to Zigbee
+  mode (not Matter). Listens on the device's state topic (identifier
+  zigbee2mqtt/<device>) because the wheel position only travels in the JSON
+  payload. In Zigbee mode the remote reports far less than over Matter: a single
+  press alternates on / off, double press is on_double, triple press off_double,
+  a long press sends nothing, and the lower part with the three LEDs only cycles
+  the LED without any message. Rotating sends brightness_move_to_level with the
+  absolute target brightness in data.action_level (0-255, several messages per
+  turn), so use light.turn_on with brightness: "{{ [data.action_level, 254] | min }}"
+  rather than a relative step, and set the rotate action's mode to "queued" so
+  quick turns are not dropped.
+buttons:
+  # Single button blueprint: the whole image is the wheel, so no geometry here.
+  - actions:
+      - title: press (on)
+        conditions:
+          - key: action
+            value: "on"
+      - title: press (off)
+        conditions:
+          - key: action
+            value: "off"
+      - title: press 2x
+        conditions:
+          - key: action
+            value: on_double
+      - title: press 3x
+        conditions:
+          - key: action
+            value: off_double
+      - title: rotate
+        conditions:
+          - key: action
+            value: brightness_move_to_level
