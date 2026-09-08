@@ -1,0 +1,105 @@
+name: HomeMatic 6 Buttons (Event Entity)
+service: HomeMatic
+event_type: event_entity
+identifier_key: device_id
+info: >-
+  This blueprint is for HomeMatic remotes exposed as event.* entities (e.g. via Matter or
+  HomeMatic Cloud). Each button corresponds to an entity whose state changes on press.
+  Button index is derived from the entity's unique id.
+buttons:
+  - x: 85
+    y: 85
+    width: 96
+    height: 109
+    conditions:
+      - key: entity_index
+        value: 0
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+  - x: 319
+    y: 85
+    width: 96
+    height: 109
+    conditions:
+      - key: entity_index
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+  - x: 85
+    y: 194
+    width: 96
+    height: 111
+    conditions:
+      - key: entity_index
+        value: 2
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+  - x: 319
+    y: 194
+    width: 96
+    height: 111
+    conditions:
+      - key: entity_index
+        value: 3
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+  - x: 85
+    y: 304
+    width: 96
+    height: 109
+    conditions:
+      - key: entity_index
+        value: 4
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+  - x: 319
+    y: 304
+    width: 96
+    height: 109
+    conditions:
+      - key: entity_index
+        value: 5
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start

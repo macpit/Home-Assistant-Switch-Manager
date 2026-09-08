@@ -1,0 +1,43 @@
+name: HomeMatic 2 Buttons (Event Entity)
+service: HomeMatic
+event_type: event_entity
+identifier_key: device_id
+info: >-
+  This blueprint is for HomeMatic remotes exposed as event.* entities (e.g. via Matter or
+  HomeMatic Cloud). Each button corresponds to an entity whose state changes on press.
+  Button index is derived from the entity's unique id. The HmIP 2-button remote reports
+  its channels bottom (ch1) / top (ch2), so the bottom zone is entity_index 0 and the top
+  zone is entity_index 1.
+buttons:
+  - x: 85
+    y: 85
+    width: 330
+    height: 164
+    conditions:
+      - key: entity_index
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+  - x: 85
+    y: 252
+    width: 330
+    height: 164
+    conditions:
+      - key: entity_index
+        value: 0
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
