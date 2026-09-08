@@ -64,8 +64,9 @@ def format_event_entity_state( hass: HomeAssistant, event: Event ) -> dict | Non
 
     # Matter remotes expose one event entity per button. Their unique ids carry the
     # endpoint number, so ordering the devices event entities by endpoint (falling
-    # back to the unique id) gives a stable button index that survives the user
-    # renaming the entities.
+    # back to the unique id, with numbers compared numerically so a Homematic
+    # channel 10 sorts after channel 2) gives a stable button index that survives
+    # the user renaming the entities.
     entity_index = 0
     siblings = []
     if device_id:
@@ -74,7 +75,7 @@ def format_event_entity_state( hass: HomeAssistant, event: Event ) -> dict | Non
              if e.domain == EVENT_ENTITY_DOMAIN),
             key=lambda e: (matter_endpoint_from_unique_id(e.unique_id) is None,
                            matter_endpoint_from_unique_id(e.unique_id) or 0,
-                           str(e.unique_id))
+                           natural_sort_key(e.unique_id))
         )
         entity_index = next((i for i, e in enumerate(siblings) if e.entity_id == new_state.entity_id), 0)
 
@@ -96,6 +97,10 @@ def format_event_entity_state( hass: HomeAssistant, event: Event ) -> dict | Non
     return data
 
 MATTER_ENDPOINT_RE = re.compile(r'-MatterNodeDevice-(\d+)-')
+
+def natural_sort_key( value ) -> list:
+    """Sort key that compares embedded numbers numerically, so channel 2 sorts before 10."""
+    return [ int(part) if part.isdigit() else part.lower() for part in re.split(r'(\d+)', str(value or '')) ]
 
 def matter_endpoint_from_unique_id( unique_id ) -> int | None:
     """Matter endpoint of a Home Assistant Matter entity, None for anything else.
