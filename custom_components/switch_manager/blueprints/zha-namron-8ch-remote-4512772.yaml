@@ -1,0 +1,254 @@
+name: Namron 8 Button Remote 4512772
+service: ZHA
+event_type: zha_event
+identifier_key: device_id
+info: "This remote comes with face plates for 2, 4 or 8 buttons. If you use the 2 button face plate, the remote will only send events for the two rightmost buttons. If you use the 4 button face plate, the remote will only send events for the four rightmost buttons."
+buttons:
+  # Button 1 (Top Left)
+  - x: 98
+    y: 98
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 4
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "on"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 0
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.0.title
+            value: hold
+  # Button 2 (Bottom Left)
+  - x: 98
+    y: 250
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 4
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "off"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 1
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.1.title
+            value: hold
+  # Button 3
+  - x: 174
+    y: 98
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 3
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "on"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 0
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.2.title
+            value: hold
+  # Button 4
+  - x: 174
+    y: 250
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 3
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "off"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 1
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.3.title
+            value: hold
+  # Button 5
+  - x: 250
+    y: 98
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 2
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "on"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 0
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.4.title
+            value: hold
+  # Button 6
+  - x: 250
+    y: 250
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 2
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "off"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 1
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.5.title
+            value: hold
+  # Button 7
+  - x: 326
+    y: 98
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "on"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 0
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.6.title
+            value: hold
+  # Button 8
+  - x: 326
+    y: 250
+    width: 76
+    height: 152
+    conditions:
+      - key: endpoint_id
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: 6
+          - key: command
+            value: "off"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: move_with_on_off
+          - key: params.move_mode
+            value: 1
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: 8
+          - key: command
+            value: stop_with_on_off
+          - key: button_last_state.7.title
+            value: hold
