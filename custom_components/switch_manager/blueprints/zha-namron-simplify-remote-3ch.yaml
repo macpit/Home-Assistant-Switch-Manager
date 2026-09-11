@@ -1,0 +1,113 @@
+name: Namron Simplify Remote 3Ch
+service: ZHA
+event_type: zha_event
+identifier_key: device_id
+buttons:
+  # Button 1 (Left Up)
+  - x: 0
+    y: 0
+    width: 165
+    height: 250
+    actions:
+      - title: press
+        conditions:
+          - key: command
+            value: button_1_remote_button_short_press
+      - title: hold
+        conditions:
+          - key: command
+            value: button_1_remote_button_long_press
+      - title: hold (released)
+        conditions:
+          - key: command
+            value: button_1_remote_button_long_release
+  # Button 2 (Left Down)
+  - x: 0
+    y: 250
+    width: 165
+    height: 249
+    actions:
+      - title: press
+        conditions:
+          - key: command
+            value: button_2_remote_button_short_press
+      - title: hold
+        conditions:
+          - key: command
+            value: button_2_remote_button_long_press
+      - title: hold (released)
+        conditions:
+          - key: command
+            value: button_2_remote_button_long_release
+  # Button 3 (Middle Up)
+  - x: 165
+    y: 0
+    width: 169
+    height: 250
+    actions:
+      - title: press
+        conditions:
+          - key: command
+            value: button_3_remote_button_short_press
+      - title: hold
+        conditions:
+          - key: command
+            value: button_3_remote_button_long_press
+      - title: hold (released)
+        conditions:
+          - key: command
+            value: button_3_remote_button_long_release
+  # Button 4 (Middle Down)
+  - x: 165
+    y: 250
+    width: 169
+    height: 249
+    actions:
+      - title: press
+        conditions:
+          - key: command
+            value: button_4_remote_button_short_press
+      - title: hold
+        conditions:
+          - key: command
+            value: button_4_remote_button_long_press
+      - title: hold (released)
+        conditions:
+          - key: command
+            value: button_4_remote_button_long_release
+  # Button 5 (Right Up)
+  - x: 334
+    y: 0
+    width: 166
+    height: 250
+    actions:
+      - title: press
+        conditions:
+          - key: command
+            value: button_5_remote_button_short_press
+      - title: hold
+        conditions:
+          - key: command
+            value: button_5_remote_button_long_press
+      - title: hold (released)
+        conditions:
+          - key: command
+            value: button_5_remote_button_long_release
+  # Button 6 (Right Down)
+  - x: 334
+    y: 250
+    width: 166
+    height: 249
+    actions:
+      - title: press
+        conditions:
+          - key: command
+            value: button_6_remote_button_short_press
+      - title: hold
+        conditions:
+          - key: command
+            value: button_6_remote_button_long_press
+      - title: hold (released)
+        conditions:
+          - key: command
+            value: button_6_remote_button_long_release
