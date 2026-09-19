@@ -1,0 +1,149 @@
+name: Müller Licht Tint Remote (MLI-404011/404049, ZHA)
+service: ZHA
+event_type: zha_event
+identifier_key: device_id
+conditions: []
+
+# Buttons/Actions map 1:1 to the zha_event data of the remote.
+# Requires the zha-device-handlers quirk "TintRemoteTS1001" for the
+# Color (cluster 768) and scene (cluster 5) events. On/Off and brightness
+# work without the quirk.
+#
+# Conditions are evaluated with switch_manager's get_val_from_str(), which
+# supports dotted paths and list indices (e.g. "args.0").
+buttons:
+  # --- On ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "6"
+          - key: command
+            value: "on"
+
+  # --- Off ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "6"
+          - key: command
+            value: "off"
+
+  # --- Brighter (short) / Brighter (hold) ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "8"
+          - key: command
+            value: "step"
+          - key: args.0
+            value: "0"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: "8"
+          - key: command
+            value: "move"
+          - key: args.0
+            value: "0"
+      - title: hold (released)
+        conditions:
+          - key: cluster_id
+            value: "8"
+          - key: command
+            value: "stop"
+
+  # --- Darker (short) / Darker (hold) ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "8"
+          - key: command
+            value: "step"
+          - key: args.0
+            value: "1"
+      - title: hold
+        conditions:
+          - key: cluster_id
+            value: "8"
+          - key: command
+            value: "move"
+          - key: args.0
+            value: "1"
+
+  # --- Colour temperature (touch wheel) ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "768"
+          - key: command
+            value: "move_to_color_temp"
+
+  # --- Colour (touch wheel) ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "768"
+          - key: command
+            value: "move_to_color"
+
+  # --- Scenes 1..6 (Basic 0x4005 write, surfaced by the quirk as Scenes attribute) ---
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "5"
+          - key: args.attribute_name
+            value: "current_scene"
+          - key: args.value
+            value: "1"
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "5"
+          - key: args.attribute_name
+            value: "current_scene"
+          - key: args.value
+            value: "2"
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "5"
+          - key: args.attribute_name
+            value: "current_scene"
+          - key: args.value
+            value: "3"
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "5"
+          - key: args.attribute_name
+            value: "current_scene"
+          - key: args.value
+            value: "4"
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "5"
+          - key: args.attribute_name
+            value: "current_scene"
+          - key: args.value
+            value: "5"
+  - actions:
+      - title: press
+        conditions:
+          - key: cluster_id
+            value: "5"
+          - key: args.attribute_name
+            value: "current_scene"
+          - key: args.value
+            value: "6"
