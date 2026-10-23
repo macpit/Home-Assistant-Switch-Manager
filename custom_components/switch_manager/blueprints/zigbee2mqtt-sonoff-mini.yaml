@@ -9,3 +9,11 @@ buttons:
         conditions:
           - key: payload
             value: toggle
+      - title: press 2x
+        conditions:
+          - key: payload
+            value: double_click
+      - title: hold
+        conditions:
+          - key: payload
+            value: long_press
