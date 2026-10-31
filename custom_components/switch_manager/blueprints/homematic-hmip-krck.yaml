@@ -1,0 +1,83 @@
+name: Homematic IP Key Ring Remote Access (HmIP-KRCK)
+service: Homematic
+event_type: homematic.keypress
+identifier_key: device_id
+info: >-
+  With the LED at the top and the key ring at the bottom, the buttons are channels 2, 1,
+  4, 3 from top to bottom (lock, unlock, open door, light). Hold fires on
+  press_long_start, hold (released) on press_long_release.
+buttons:
+  - d: "M261,100 Q310,57 379,54 L380,150 L300,150 Z"
+    conditions:
+      - key: subtype
+        value: 3
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
+  - x: 391
+    y: 43
+    width: 90
+    height: 107
+    conditions:
+      - key: subtype
+        value: 4
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
+  - x: 496
+    y: 43
+    width: 88
+    height: 107
+    conditions:
+      - key: subtype
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
+  - d: "M593,52 Q655,57 717,102 L679,151 L593,151 Z"
+    conditions:
+      - key: subtype
+        value: 2
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release

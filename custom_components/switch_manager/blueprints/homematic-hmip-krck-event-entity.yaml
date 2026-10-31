@@ -1,0 +1,86 @@
+name: Homematic IP Key Ring Remote Access (HmIP-KRCK) (Event Entity)
+service: Homematic
+event_type: event_entity
+identifier_key: device_id
+info: >-
+  Uses the event.* entities that Homematic(IP) Local creates for each button channel
+  instead of the homematic.keypress bus event, so it keeps working when the bus events
+  do not arrive (see issue #72). Identifier is the Home Assistant device id of the
+  remote. With the LED at the top and the key ring at the bottom, the buttons are
+  channels 2, 1, 4, 3 (entity_index 1, 0, 3, 2) from top to bottom (lock, unlock, open
+  door, light).
+buttons:
+  - d: "M261,100 Q310,57 379,54 L380,150 L300,150 Z"
+    conditions:
+      - key: entity_index
+        value: 2
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: event_type
+            value: press_long_release
+  - x: 391
+    y: 43
+    width: 90
+    height: 107
+    conditions:
+      - key: entity_index
+        value: 3
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: event_type
+            value: press_long_release
+  - x: 496
+    y: 43
+    width: 88
+    height: 107
+    conditions:
+      - key: entity_index
+        value: 0
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: event_type
+            value: press_long_release
+  - d: "M593,52 Q655,57 717,102 L679,151 L593,151 Z"
+    conditions:
+      - key: entity_index
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: event_type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: event_type
+            value: press_long_release
