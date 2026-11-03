@@ -2,21 +2,6 @@ name: Shelly BLU Button Tough 1 ZB
 service: BTHome
 event_type: bthome_ble_event
 identifier_key: device_id
-info: |
-  Shelly BLU Button Tough 1 ZB connected through Home Assistant's
-  BTHome integration (Bluetooth). Add the device to BTHome first, then press
-  the button during Switch Manager discovery.
-
-  hold uses hold_press; hold (released) uses long_press. Enable Repeat until
-  release on hold for hold-to-dim. press 2x (hold released) and press 3x
-  (hold released) are a short press or two short presses followed by a long press.
-
-  Event mappings follow the Shelly BLE API and the BTHome parser; not yet
-  tested on a physical device.
-# Illustration redrawn from the product photo in the style of bthome-shelly-blu-button1.png.
-# Product reference: https://www.shelly.com/products/shelly-blu-button-tough-1-zb-black
-# BLE events: https://shelly-api-docs.shelly.cloud/docs-ble/Devices/BLU_ZB/button1_ZB/
-# HA payloads use event_type, including hold_press and the long-press variants.
 conditions:
   - key: event_class
     value: button
