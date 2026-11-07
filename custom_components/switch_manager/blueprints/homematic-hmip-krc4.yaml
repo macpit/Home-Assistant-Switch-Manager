@@ -1,0 +1,83 @@
+name: Homematic IP Key Ring Remote 4 Buttons (HmIP-KRC4)
+service: Homematic
+event_type: homematic.keypress
+identifier_key: device_id
+info: >-
+  With the LED at the top and the key ring at the bottom, the buttons are channels
+  2, 1, 4, 3 from top to bottom. Hold fires on press_long_start, hold (released) on
+  press_long_release.
+buttons:
+  - d: "M255,96 Q300,66 355,57 L357,137 L278,137 Z"
+    conditions:
+      - key: subtype
+        value: 3
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
+  - x: 371
+    y: 52
+    width: 75
+    height: 86
+    conditions:
+      - key: subtype
+        value: 4
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
+  - x: 458
+    y: 52
+    width: 77
+    height: 86
+    conditions:
+      - key: subtype
+        value: 1
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
+  - d: "M548,57 Q602,66 647,96 L618,137 L547,137 Z"
+    conditions:
+      - key: subtype
+        value: 2
+    actions:
+      - title: press
+        conditions:
+          - key: type
+            value: press_short
+      - title: hold
+        conditions:
+          - key: type
+            value: press_long_start
+      - title: hold (released)
+        conditions:
+          - key: type
+            value: press_long_release
