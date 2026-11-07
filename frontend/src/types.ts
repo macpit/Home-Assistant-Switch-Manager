@@ -61,6 +61,7 @@ export interface Blueprint {
   service: string;
   has_image: boolean;
   event_type: string;
+  esphome_events?: string[];
   identifier_key: string;
   mqtt_topic_format?: string;
   mqtt_sub_topics?: boolean;
