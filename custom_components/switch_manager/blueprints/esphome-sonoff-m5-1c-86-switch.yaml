@@ -1,0 +1,28 @@
+name: Sonoff M5 1-channel switch (M5-1C-86)
+service: ESPHome
+event_type: esphome
+esphome_events:
+  - switch_click
+  - switch_double_click
+  - switch_long_press
+identifier_key: device
+buttons:
+  - actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_click
+          - key: button
+            value: middle
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: switch_double_click
+          - key: button
+            value: middle
+      - title: hold
+        conditions:
+          - key: event_type
+            value: switch_long_press
+          - key: button
+            value: middle

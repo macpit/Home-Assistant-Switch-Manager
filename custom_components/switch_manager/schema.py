@@ -59,6 +59,13 @@ BLUEPRINT_MQTT_SCHEMA = BLUEPRINT_SCHEMA.extend({
     vol.Optional('mqtt_topic_format'): cv.string,
     vol.Optional('mqtt_sub_topics', default=False): cv.boolean
 })
+BLUEPRINT_ESPHOME_SCHEMA = BLUEPRINT_EVENT_SCHEMA.extend({
+    vol.Required('esphome_events'): vol.All(
+        cv.ensure_list,
+        [vol.All(cv.string, vol.Length(min=1))],
+        vol.Length(min=1),
+    )
+})
 def _normalize_config_action(value):
     """Normalize raw HA action dicts into {mode, sequence} wrapper."""
     if isinstance(value, dict) and 'sequence' not in value and ('action' in value or 'service' in value):
