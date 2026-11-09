@@ -436,7 +436,7 @@ class Blueprint:
                             continue
                         identifier = data.get('topic') if self.is_mqtt else data.get(self.identifier_key)
                         discovered = { "identifier": identifier }
-                        if self.is_event_entity:
+                        if self.is_event_entity or self.is_esphome:
                             # A device id says nothing to a human, so hand the panel the
                             # device name as well for the discovery list.
                             discovered['name'] = get_device_name( self._hass, data.get('device_id') )

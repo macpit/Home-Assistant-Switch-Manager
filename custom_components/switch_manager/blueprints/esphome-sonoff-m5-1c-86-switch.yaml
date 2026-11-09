@@ -5,7 +5,7 @@ esphome_events:
   - switch_click
   - switch_double_click
   - switch_long_press
-identifier_key: device
+identifier_key: device_id
 buttons:
   - actions:
       - title: press
