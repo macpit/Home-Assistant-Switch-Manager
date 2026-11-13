@@ -1,0 +1,54 @@
+name: Sonoff M5 2-channel switch (M5-2C-86)
+service: ESPHome
+event_type: esphome
+esphome_events:
+  - switch_click
+  - switch_double_click
+  - switch_long_press
+identifier_key: device_id
+buttons:
+  - d: "m 14.085162,0.07652897
+c 77.537589,0 155.075178,0 232.612768,0 0,166.60297103 0,333.20593103 0,499.80890103 -77.88441,0 -155.76882,0 -233.65323,0 -14.3452254,0.31729 -13.29282346,-14.99211 -12.8413102,-25.01203 0,-155.0475 0,-310.09499 0,-465.142489
+C 0.45287333,3.220791 8.521242,0.04461142 14.085162,0.07652897
+Z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_click
+          - key: button
+            value: left
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: switch_double_click
+          - key: button
+            value: left
+      - title: hold
+        conditions:
+          - key: event_type
+            value: switch_long_press
+          - key: button
+            value: left
+  - d: "m 484.08348,0.25706215
+c -79.13705,0 -158.27411,0 -237.41116,0 0,166.55016785 0,333.10034785 0,499.65051785 79.49103,0 158.98206,0 238.47309,0 14.49228,0.43412 13.62592,-14.92761 13.10619,-25.06396 0,-154.97841 0,-309.95682 0,-464.9352361 -0.29428,-6.5984549 -8.56419,-9.66912318 -14.16812,-9.65132175
+z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_click
+          - key: button
+            value: right
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: switch_double_click
+          - key: button
+            value: right
+      - title: hold
+        conditions:
+          - key: event_type
+            value: switch_long_press
+          - key: button
+            value: right

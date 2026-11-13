@@ -1,5 +1,5 @@
 name: LocalBytes LocalDeck 24
-service: ESPhome
+service: ESPHome
 event_type: esphome.localdeck_button
 identifier_key: device_id
 buttons:

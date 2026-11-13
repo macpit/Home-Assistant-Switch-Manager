@@ -1,0 +1,76 @@
+name: Sonoff M5 3-channel switch (M5-3C-86)
+service: ESPHome
+event_type: esphome
+esphome_events:
+  - switch_click
+  - switch_double_click
+  - switch_long_press
+identifier_key: device_id
+buttons:
+  - d: "m 9.044312,0.11440629
+c 49.916746,0 99.833488,0 149.750238,0 0,160.23577371 0,320.47155371 0,480.70733371 -50.99071,-0.34035 -102.113924,0.68101 -153.0217403,-0.51118 -9.8079527,-8.29039 -4.1615258,-22.71811 -5.66523102,-34.09255 0,-145.60606 0,-291.21213 0,-436.8181898
+C -0.02998347,4.672668 4.2670396,0.08108484 9.044312,0.11440629
+Z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_click
+          - key: button
+            value: left
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: switch_double_click
+          - key: button
+            value: left
+      - title: hold
+        conditions:
+          - key: event_type
+            value: switch_long_press
+          - key: button
+            value: left
+  - d: "m 158.89063,0.0529534
+c 0,160.2957366 0,320.5914766 0,480.8872166 54.05098,0 108.10195,0 162.15293,0 0,-160.29574 0,-320.59148 0,-480.8872166 -54.05098,0 -108.10195,0 -162.15293,0
+z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_click
+          - key: button
+            value: middle
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: switch_double_click
+          - key: button
+            value: middle
+      - title: hold
+        conditions:
+          - key: event_type
+            value: switch_long_press
+          - key: button
+            value: middle
+  - d: "m 471.91952,-0.02146942
+c -50.29104,0 -100.58209,0 -150.87313,0 0,160.32635942 0,320.65271942 0,480.97907942 51.37323,-0.34116 102.87833,0.68221 154.16917,-0.51143 9.87171,-8.25741 4.19866,-22.71958 5.70771,-34.09802 0,-145.69299 0,-291.38598 0,-437.0789683 0.13607,-4.7539363 -4.21543,-9.32808079 -9.00375,-9.29066112
+z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_click
+          - key: button
+            value: right
+      - title: press 2x
+        conditions:
+          - key: event_type
+            value: switch_double_click
+          - key: button
+            value: right
+      - title: hold
+        conditions:
+          - key: event_type
+            value: switch_long_press
+          - key: button
+            value: right

@@ -298,6 +298,19 @@ async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _c
         _callback( event.data.copy(), event.context )
 
     @callback
+    def _handleEsphome( event ):
+        event_data = event.data.copy()
+        has_esphome_prefix = any(
+            esphome_event == event.event_type
+            for esphome_event in blueprint.esphome_events
+        )
+        event_data['event_type'] = (
+            event.event_type if has_esphome_prefix
+            else event.event_type.removeprefix('esphome.')
+        )
+        _callback( event_data, event.context )
+
+    @callback
     def _handleEntityEvent( event: Event ):
         data = format_event_entity_state( hass, event )
         if data is not None:
@@ -321,6 +334,15 @@ async def create_event_listeners( hass: HomeAssistant, blueprint, mqtt_topic, _c
                 listeners.append( await mqtt_subscribe(hass, f"{mqtt_topic}/#", _handleMQTT) )
         except HomeAssistantError:
             LOGGER.error(f"Unable to handle switch as MQTT is not loaded")
+    elif blueprint.is_esphome:
+        event_types = {
+            event_type if event_type.startswith('esphome.') else f'esphome.{event_type}'
+            for event_type in blueprint.esphome_events
+        }
+        listeners = [
+            hass.bus.async_listen(event_type, _handleEsphome)
+            for event_type in event_types
+        ]
     else:
         listeners.append( hass.bus.async_listen(blueprint.event_type, _handleEvent) )
     return listeners
@@ -336,9 +358,11 @@ class Blueprint:
         self.service = config.get('service')
         self.event_type = config.get('event_type')
         self.is_mqtt = self.event_type == 'mqtt'
+        self.is_esphome = self.event_type == 'esphome'
         self.is_event_entity = self.event_type == EVENT_TYPE_EVENT_ENTITY
         self.mqtt_topic_format = config.get('mqtt_topic_format', None)
         self.mqtt_sub_topics = config.get('mqtt_sub_topics', False)
+        self.esphome_events = config.get('esphome_events', [])
         # Blueprints for Zigbee2MQTT use the default base topic in their topic
         # format; discovery may swap it for the base topics actually in use.
         self.is_zigbee2mqtt = bool(
@@ -366,6 +390,9 @@ class Blueprint:
                 listener()
 
         if self.is_mqtt and not self.mqtt_topic_format:
+            return None
+
+        if self.is_esphome and not self.esphome_events:
             return None
 
         # A Zigbee2MQTT blueprint is written for the default base topic. When the
@@ -409,7 +436,7 @@ class Blueprint:
                             continue
                         identifier = data.get('topic') if self.is_mqtt else data.get(self.identifier_key)
                         discovered = { "identifier": identifier }
-                        if self.is_event_entity:
+                        if self.is_event_entity or self.is_esphome:
                             # A device id says nothing to a human, so hand the panel the
                             # device name as well for the discovery list.
                             discovered['name'] = get_device_name( self._hass, data.get('device_id') )

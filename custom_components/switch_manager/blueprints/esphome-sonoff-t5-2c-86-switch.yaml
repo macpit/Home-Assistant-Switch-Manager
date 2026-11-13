@@ -1,0 +1,58 @@
+name: Sonoff T5 2-channel switch (T5-2C-86)
+service: ESPHome
+event_type: esphome
+esphome_events:
+  - switch_touch
+  - switch_long_touch
+  - switch_swipe
+identifier_key: device_id
+buttons:
+  - d: "m 127.57405,12.795037
+c 0,149.186963 0,298.373933 0,447.560893 -40.35152,-2.97147 -80.703039,-5.94293 -121.0545585,-8.9144 -4.6977435,-1.08816 -7.02531952,-6.021 -6.38644065,-10.48494 0,-136.29711 0,-272.59422 0,-408.891336
+C 0.71094061,26.34947 5.7744254,21.535979 11.596627,21.876415 50.255768,18.849289 88.914909,15.822163 127.57405,12.795037
+Z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_touch
+          - key: button
+            value: left
+  - d: "m 275.14915,10.644068
+c 0,150.613562 0,301.227122 0,451.840682 0.65394,5.70981 -5.14268,7.82309 -9.80014,6.76793 -46.2282,-2.96558 -92.4564,-5.93117 -138.6846,-8.89675 0,-149.21652 0,-298.43305 0,-447.649574 47.03019,-3.6082443 94.06037,-7.2164886 141.09056,-10.8247329 4.71445,0.1757945 7.69259,4.2241626 7.39418,8.7624449
+z"
+    actions:
+      - title: press
+        conditions:
+          - key: event_type
+            value: switch_touch
+          - key: button
+            value: right
+  - d: "m 187.41899,226.48634
+c 0,32.8337 -26.61697,59.45067 -59.45067,59.45067 -32.833695,0 -59.450666,-26.61697 -59.450666,-59.45066 0,-32.8337 26.616971,-59.45067 59.450666,-59.45067 32.8337,0 59.45067,26.61697 59.45067,59.45066
+z"
+    actions:
+      - title: both press
+        conditions:
+          - key: event_type
+            value: switch_touch
+          - key: button
+            value: both
+      - title: both hold
+        conditions:
+          - key: event_type
+            value: switch_long_touch
+          - key: button
+            value: both
+      - title: swipe left
+        conditions:
+          - key: event_type
+            value: switch_swipe
+          - key: button
+            value: left
+      - title: swipe right
+        conditions:
+          - key: event_type
+            value: switch_swipe
+          - key: button
+            value: right

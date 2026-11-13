@@ -251,6 +251,41 @@ Once a switch is saved, you can enable debugging through the top right menu up i
 
 Once enabled, open your browser dev console to view debugging output.
 
+### ESPHome events
+
+To use the included Sonoff blueprints, your firmware must publish the expected events and data:
+
+| Blueprint | `esphome_events` | `button` values |
+| --- | --- | --- |
+| M5 1C | `switch_click`, `switch_double_click`, `switch_long_press` | `middle` |
+| M5 2C | `switch_click`, `switch_double_click`, `switch_long_press` | `left`, `right` |
+| M5 3C | `switch_click`, `switch_double_click`, `switch_long_press` | `left`, `middle`, `right` |
+| T5 2C | `switch_touch`, `switch_long_touch`, `switch_swipe` | `left`, `right`; `both` for simultaneous touch |
+
+For a multi-event ESPHome blueprint, set `event_type: esphome` and list the event names in `esphome_events`. Switch Manager listens for `esphome.<event_name>` and adds the `esphome.` prefix automatically:
+
+```yaml
+event_type: esphome
+esphome_events:
+  - switch_click
+  - switch_double_click
+  - switch_long_press
+identifier_key: device_id
+```
+
+Add a `homeassistant.event` action to each matching ESPHome trigger. For example, this publishes a click for the M5 1C middle button:
+
+```yaml
+- homeassistant.event:
+    event: esphome.switch_click
+    data:
+      button: middle
+```
+
+Home Assistant adds `device_id` to ESPHome events automatically, so firmware does not need to include its own device identifier. Use the event name and button value for the trigger; T5 swipes use `left` or `right`. The event name is available to template conditions as `data.event_type`.
+
+ESPHome event names and data are defined by each firmware, so other devices may use a different format. If the included templates do not match your firmware, either adapt one to listen for your event names using `esphome_events`, or create a template for a single event type, as the [LocalDeck blueprint](custom_components/switch_manager/blueprints/esphome-localbytes-localdeck-24.yaml) does. Set `identifier_key` to the identifier field available in the event data; ESPHome provides `device_id` automatically.
+
 ### Root Structure
 
 The following tables shows how to structure a blueprint yaml file.

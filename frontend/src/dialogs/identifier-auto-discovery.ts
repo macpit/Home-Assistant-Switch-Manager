@@ -196,7 +196,12 @@ export class SwitchManagerDialogIdentifierAutoDiscovery extends LitElement {
                 </div>`
             : this._params.blueprint?.event_type
             ? html`<div class="identifier-ref">
-                Event Type: <b>${this._params.blueprint.event_type}</b>
+                ${this._params.blueprint.event_type === "esphome" &&
+                this._params.blueprint.esphome_events?.length
+                  ? html`ESPHome Events:
+                      <b>${this._params.blueprint.esphome_events.join(", ")}</b>`
+                  : html`Event Type:
+                      <b>${this._params.blueprint.event_type}</b>`}
                 |
                 <a href="/developer-tools/event" target="_blank" rel="noreferrer"
                   >Event Tool</a
