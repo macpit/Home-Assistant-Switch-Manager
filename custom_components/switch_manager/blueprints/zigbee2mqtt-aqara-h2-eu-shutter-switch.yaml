@@ -1,0 +1,41 @@
+name: Aqara H2 EU shutter switch (DS-K02D)
+service: Zigbee2MQTT
+event_type: mqtt
+mqtt_topic_format: zigbee2mqtt/+/action
+buttons:
+  - x: 19
+    y: 19
+    width: 81
+    height: 81
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_1_single
+  - x: 104
+    y: 19
+    width: 81
+    height: 81
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_2_single
+  - x: 19
+    y: 104
+    width: 81
+    height: 81
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_3_single
+  - x: 104
+    y: 104
+    width: 81
+    height: 81
+    actions:
+      - title: press
+        conditions:
+          - key: payload
+            value: button_4_single
