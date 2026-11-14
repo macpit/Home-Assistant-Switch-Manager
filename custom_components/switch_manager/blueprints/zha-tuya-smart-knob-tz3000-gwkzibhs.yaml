@@ -1,0 +1,78 @@
+# Configuration for the ZHA Tuya Smart Knob (_TZ3000_gwkzibhs / TS004F),
+# sold as a "Zigbee smart knob" / rotary scene switch on AliExpress and others.
+# Bought here: https://de.aliexpress.com/item/1005007475312050.html
+#
+# The knob has two operation modes (triple press switches between them) and
+# sends different zha_event commands in each. This blueprint covers both, so a
+# switch keeps working after an accidental mode change.
+#
+#   gesture          command mode                      event mode
+#   ---------------  --------------------------------  -------------------------
+#   press            toggle                            press_type, press_type: 0
+#   press 2x         press_type, press_type: 1         press_type, press_type: 1
+#                    (followed by an extra "off")
+#   hold             move_saturation (sent twice),     press_type, press_type: 2
+#                    then move_hue (sent twice)
+#   hold release     stop_move_step (sent twice)       - (no event)
+#   rotate           step, step_mode 0 = right,        rotate_type, 0 = right,
+#                    1 = left, step_size = 13/notch    1 = left (no step size)
+#   rotate while     step_color_temp, step_mode        - (not available)
+#   pressed          1 = right, 3 = left, step_size
+#                    grows with the distance turned
+#                    (18 and 36 seen to the right,
+#                    10 and 20 to the left)
+#
+# Pressed rotation works best when the knob is turned right after pressing it;
+# the direction can then be changed without releasing the knob. Held for a
+# moment first, it sends "hold"; after that some test runs still sent
+# step_color_temp but no release, others sent the release but no
+# step_color_temp.
+#
+# Commands captured with ZHA on Home Assistant 2026.11.1 (November 2026).
+
+name: TuYa Smart Knob (_TZ3000_gwkzibhs/TS004F)
+service: ZHA
+event_type: zha_event
+identifier_key: device_id
+info: >-
+  Works in both operation modes of the knob; a triple press switches between
+  command mode and event mode. Command mode is recommended for dimming: every
+  rotate event then carries the distance turned in data.params.step_size (13 per
+  notch, e.g. 39 for a quick turn over three notches), while event mode only
+  reports the direction and sends few events when the knob is turned
+  continuously. To dim in proportion to the rotation use a template such as
+  brightness_step_pct: "{{ 5 * (data.params.step_size | default(13)) / 13 }}"
+  for rotate right, and the negative value for rotate left; in event mode this
+  falls back to a single 5 % step. Command mode only: turning the knob while it
+  is pressed triggers "rotate left/right (pressed)", again with
+  data.params.step_size. Start turning right after pressing: held for about a
+  second first, the knob sends "hold" instead, and a pressed rotation does not
+  always end with a release event, so avoid "repeat until release" on hold if
+  you use pressed rotation (the loop then only ends after its 15 s timeout). In
+  command mode the knob
+  sends the hold and release commands twice; the duplicates are filtered out
+  here. "hold (released)" only exists in command mode. A double press in
+  command mode is followed by an extra "off" command, which is intentionally
+  not mapped to an action.
+buttons:
+  - actions:
+      - title: press
+        conditions: "{{ data.command == 'toggle' or (data.command == 'press_type' and data.params.press_type == 0) }}"
+      - title: press 2x
+        conditions:
+          - key: command
+            value: press_type
+          - key: params.press_type
+            value: "1"
+      - title: hold
+        conditions: "{{ (data.command == 'press_type' and data.params.press_type == 2) or (data.command == 'move_saturation' and not (data.button_last_state[0] is not none and data.button_last_state[0].title == 'hold' and data.timestamp - data.button_last_state[0].timestamp < 2)) }}"
+      - title: hold (released)
+        conditions: "{{ data.command == 'stop_move_step' and not (data.button_last_state[0] is not none and data.button_last_state[0].title == 'hold (released)' and data.timestamp - data.button_last_state[0].timestamp < 1) }}"
+      - title: rotate left
+        conditions: "{{ (data.command == 'step' and data.params.step_mode == 1) or (data.command == 'rotate_type' and data.params.rotate_type == 1) }}"
+      - title: rotate right
+        conditions: "{{ (data.command == 'step' and data.params.step_mode == 0) or (data.command == 'rotate_type' and data.params.rotate_type == 0) }}"
+      - title: rotate left (pressed)
+        conditions: "{{ data.command == 'step_color_temp' and data.params.step_mode == 3 }}"
+      - title: rotate right (pressed)
+        conditions: "{{ data.command == 'step_color_temp' and data.params.step_mode == 1 }}"
