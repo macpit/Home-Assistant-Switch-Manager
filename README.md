@@ -165,6 +165,15 @@ For actions that have a release counterpart in the blueprint (e.g. **hold** / **
 * Devices that keep sending *hold* while pressed only extend the running loop, they do not start a second one.
 * If the release event gets lost the loop stops on its own after 15 seconds.
 * In YAML the action carries `loop: true` and `loop_interval: 250`.
+* Every run gets the variable `repeat_count`: `0` on the first run, then `1`, `2`, … while the button stays held (always `0` for actions that do not loop). Use it to accelerate, e.g. fine steps first and bigger ones the longer you hold:
+
+  ```yaml
+  - action: light.turn_on
+    target:
+      entity_id: light.living_room
+    data:
+      brightness_step_pct: "{{ [2 + repeat_count, 10] | min }}"
+  ```
 
 Blueprints pair actions automatically by title (`hold` → `hold (released)`, or a single `released` / `release` action on the same button). Blueprint authors can override this with `released_by` on the action.
 
@@ -356,6 +365,7 @@ title           | `string`                        | *        | Please read namin
 conditions      | `list` [Condition](#condition) \| `string` [Template](https://www.home-assistant.io/docs/configuration/templating/)  | -        | This optional list or [Template](https://www.home-assistant.io/docs/configuration/templating/) allows the action to only accept conditions within the event data or mqtt payload. This can help scope down to the kind of action if the button has multiple. All conditions must evaluate to true to be valid. See [Condition](#condition) for details on defining a condition. 
 scale_field     | `string` \| `list`             | -        | Name(s) of numeric service data fields (`data` / `service_data` / `event_data`) that are multiplied by the event's press or notch count (`data.presses`) before the sequence runs **once**. Meant for relative values like `brightness_step_pct` on a scroll wheel so the user's action stays a plain step without templates. If the sequence contains none of the fields (e.g. `media_player.volume_up`) it runs once per press/notch instead.
 repeat          | `string`                        | -        | Name of a numeric field in the event data (e.g. `presses`) used as a repeat count; the whole sequence runs that many times in order. Use for discrete actions (next track, scene cycling). `scale_field` wins if both are set. Both are capped at 50.
+presses_from    | `map`                           | -        | Where `scale_field` takes the press / notch count from for events that have no `presses` field (everything except event entities): `key` is a numeric event data field, nested with dots (`params.step_size`), divided by `per` (default 1) and rounded. Example for a Tuya knob that reports 13 per notch: `presses_from: {key: params.step_size, per: 13}`, so a fast turn over three notches scales the step x3. Missing field = 1.
 released_by     | `string`                        | -        | Title of the action on the same button whose event ends a *repeat until release* loop of this action. Derived automatically from `hold` → `hold (released)` (or a lone `released` / `release`), so only needed for other naming.
 
 ### Condition
@@ -396,7 +406,7 @@ Matter remotes (and some other integrations such as Hue, Zigbee2MQTT with HA dis
 Key             | Details
 --              | -
 event_type      | The event, e.g. `multi_press_1`, `multi_press_2`, `long_press`, `long_release`
-presses         | Press / notch count of the event (`totalNumberOfPressesCounted` or the `N` in `multi_press_N`), default 1. Used by `scale_field` and `repeat`
+presses         | Press / notch count of the event (`press_count` of HA's standard button events, `totalNumberOfPressesCounted` or the `N` in `multi_press_N`), default 1. Used by `scale_field` and `repeat`
 entity_id, device_id, unique_id, original_name, platform | Registry details of the entity that fired
 endpoint        | Matter endpoint number parsed from the unique id (`None` for non Matter entities). Handy to tell buttons apart, see the BILRESA blueprints
 entity_index    | 0 based position of the entity among the device's `event.*` entities, ordered by Matter endpoint or otherwise by unique id with numbers compared numerically (channel 2 before channel 10). Stable even when the user renames entities

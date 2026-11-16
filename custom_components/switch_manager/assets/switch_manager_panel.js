@@ -779,7 +779,7 @@ function t(t,e,i,s){var o,r=arguments.length,n=r<3?e:null===s?s=Object.getOwnPro
                             <span id="loop-options">
                               <ha-formfield
                                 label="Repeat until ${this._releaseTitle()}"
-                                title="Run the sequence again and again until the release event of this button arrives"
+                                title="Run the sequence again and again until the release event of this button arrives. The variable repeat_count (0, 1, 2, …) counts the runs."
                               >
                                 <ha-switch
                                   .checked=${!!this._currentAction()?.loop}

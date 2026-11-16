@@ -222,7 +222,7 @@ export class SwitchManagerSwitchEditor extends LitElement {
                             <span id="loop-options">
                               <ha-formfield
                                 label="Repeat until ${this._releaseTitle()}"
-                                title="Run the sequence again and again until the release event of this button arrives"
+                                title="Run the sequence again and again until the release event of this button arrives. The variable repeat_count (0, 1, 2, …) counts the runs."
                               >
                                 <ha-switch
                                   .checked=${!!this._currentAction()?.loop}

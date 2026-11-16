@@ -1,0 +1,53 @@
+# Generic blueprint for any Home Assistant event entity that reports the standard
+# button event types (`event.ButtonEventType`, HA 2026.8+, revised in 2026.11):
+#
+#   press_start / press_end           physical: the button went down / up
+#   single_press / multi_press        gesture: the device counted 1 / 2+ presses
+#                                     (`press_count` attribute)
+#   long_press_start / long_press_end gesture: hold started / ended
+#   multi_press_end (+ multi_press_count) deprecated, removed in 2027.5
+#
+# Integrations differ in which of these they declare (`event_types`), so the
+# conditions below fall back on the physical types when a device has no gesture
+# types: e.g. Lutron Caseta only sends press_start / press_end, ISY994 sends
+# press_end, multi_press_end and long_press_start.
+#
+# One switch per event entity: the identifier is the entity id of the button.
+
+name: Button (HA standard event entity)
+service: Event entity
+event_type: event_entity
+identifier_key: entity_id
+info: >-
+  For any event entity that uses Home Assistant's standard button event types
+  (single_press, multi_press, long_press_start, press_start/press_end, ...), e.g.
+  Lutron Caseta, ISY994 and more integrations as they adopt the standard. Use the
+  entity id of the button (event.xxx) as identifier; create one switch per button.
+  Devices without a gesture layer only report press_start/press_end: then "press"
+  fires on release, and "press 2x/3x" never fire. "hold" needs a device that
+  reports long_press_start.
+buttons:
+  - actions:
+      - title: press
+        conditions: >-
+          {% set types = data.attributes.event_types | default([]) %}
+          {% set et = data.event_type %}
+          {% set last = data.button_last_state[0] %}
+          {% set held = last is not none and (last.title == 'hold'
+               or (last.title == 'hold (released)' and data.timestamp - last.timestamp < 1)) %}
+          {{ et == 'single_press'
+             or (et in ['multi_press', 'multi_press_end'] and data.presses == 1)
+             or (et == 'press_end' and 'single_press' not in types and not held)
+             or (et == 'press_start' and 'press_end' not in types and 'single_press' not in types) }}
+      - title: press 2x
+        conditions: "{{ data.event_type in ['multi_press', 'multi_press_end'] and data.presses == 2 }}"
+      - title: press 3x
+        conditions: "{{ data.event_type in ['multi_press', 'multi_press_end'] and data.presses == 3 }}"
+      - title: hold
+        conditions: "{{ data.event_type == 'long_press_start' }}"
+      - title: hold (released)
+        conditions: >-
+          {% set types = data.attributes.event_types | default([]) %}
+          {% set held = data.button_last_state[0] is not none and data.button_last_state[0].title == 'hold' %}
+          {{ data.event_type == 'long_press_end'
+             or (data.event_type == 'press_end' and held and 'long_press_end' not in types) }}

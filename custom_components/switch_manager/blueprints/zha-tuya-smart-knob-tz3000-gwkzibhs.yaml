@@ -40,7 +40,9 @@ info: >-
   rotate event then carries the distance turned in data.params.step_size (13 per
   notch, e.g. 39 for a quick turn over three notches), while event mode only
   reports the direction and sends few events when the knob is turned
-  continuously. To dim in proportion to the rotation use a template such as
+  continuously. A plain brightness_step_pct in rotate left/right is multiplied
+  by the notches turned (a quick turn over three notches = 3x the step), no
+  template needed. To dim in proportion to the rotation use a template such as
   brightness_step_pct: "{{ 5 * (data.params.step_size | default(13)) / 13 }}"
   for rotate right, and the negative value for rotate left; in event mode this
   falls back to a single 5 % step. Command mode only: turning the knob while it
@@ -70,8 +72,16 @@ buttons:
         conditions: "{{ data.command == 'stop_move_step' and not (data.button_last_state[0] is not none and data.button_last_state[0].title == 'hold (released)' and data.timestamp - data.button_last_state[0].timestamp < 1) }}"
       - title: rotate left
         conditions: "{{ (data.command == 'step' and data.params.step_mode == 1) or (data.command == 'rotate_type' and data.params.rotate_type == 1) }}"
+        scale_field: brightness_step_pct
+        presses_from:
+          key: params.step_size
+          per: 13
       - title: rotate right
         conditions: "{{ (data.command == 'step' and data.params.step_mode == 0) or (data.command == 'rotate_type' and data.params.rotate_type == 0) }}"
+        scale_field: brightness_step_pct
+        presses_from:
+          key: params.step_size
+          per: 13
       - title: rotate left (pressed)
         conditions: "{{ data.command == 'step_color_temp' and data.params.step_mode == 3 }}"
       - title: rotate right (pressed)

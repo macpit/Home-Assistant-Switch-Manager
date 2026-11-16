@@ -116,9 +116,12 @@ def presses_from_event( attributes ) -> int:
     Matter batches fast scrolling / multi presses into one `multi_press_N` event and
     reports the count in `totalNumberOfPressesCounted`.
     """
-    count = attributes.get('totalNumberOfPressesCounted')
-    if isinstance(count, int) and not isinstance(count, bool) and count > 0:
-        return count
+    # HA standard button events (`multi_press` + `press_count`, 2026.11; the
+    # deprecated `multi_press_count`) and Matter's own attribute.
+    for attr in ('press_count', 'multi_press_count', 'totalNumberOfPressesCounted'):
+        count = attributes.get(attr)
+        if isinstance(count, int) and not isinstance(count, bool) and count > 0:
+            return count
     event_type = attributes.get('event_type')
     if isinstance(event_type, str) and event_type.startswith('multi_press_'):
         tail = event_type.rsplit('_', 1)[-1]
@@ -533,12 +536,24 @@ class BlueprintButtonAction:
         # ... or run the whole sequence as often as the named data field says
         # (discrete actions such as "next track").
         self.repeat = config.get('repeat')
+        # Optional source of the press / notch count for events without `presses`.
+        self.presses_from = config.get('presses_from')
         # Loop-until-release: which sibling action ends a looping run of this one.
         self.released_by = config.get('released_by')
         self.release_index = None
 
     def check_conditions( self, data ):
         return check_conditions( self._hass, self.conditions, data )
+
+    def presses( self, data ):
+        """Press / notch count of an event: `presses_from` if set, else `data.presses`."""
+        if not self.presses_from:
+            return data.get('presses', 1)
+        value = get_val_from_str( self.presses_from.get('key'), data )
+        try:
+            return round( float(value) / float(self.presses_from.get('per', 1)) )
+        except (TypeError, ValueError, ZeroDivisionError):
+            return 1
 
     def from_dict(cls, data):
         return cls(**data)
@@ -595,12 +610,16 @@ class ManagedSwitchConfigButtonAction:
         self._loop_task = asyncio.current_task()
         interval = max( self.loop_interval, 1 ) / 1000
         LOGGER.debug(f"Loop started for switch:{self.switch_id} button:{self.button_index} action:{self.index} interval:{interval}s")
+        repeat_count = 0
         try:
             while not self._loop_stop.is_set():
                 if time.monotonic() > self._loop_deadline:
                     LOGGER.warning(f"switch:{self.switch_id} button:{self.button_index} action:{self.index} loop stopped after {LOOP_MAX_SECONDS}s without a release event")
                     break
-                await self.script.async_run( run_variables=data, context=context )
+                # `repeat_count` is 0 on the first run and counts up per repeat, so a
+                # sequence can accelerate (fine steps first, bigger ones the longer it is held).
+                await self.script.async_run( run_variables={ **data, 'repeat_count': repeat_count }, context=context )
+                repeat_count += 1
                 try:
                     await asyncio.wait_for( self._loop_stop.wait(), interval )
                 except asyncio.TimeoutError:
@@ -632,13 +651,13 @@ class ManagedSwitchConfigButtonAction:
     def scale_factor( self, data ) -> int:
         """How often this action should apply for the incoming event (1 = normal)."""
         if self.blueprint.scale_field:
-            key = 'presses'
+            value = self.blueprint.presses( data )
         elif self.blueprint.repeat:
-            key = self.blueprint.repeat
+            value = data.get( self.blueprint.repeat, 1 )
         else:
             return 1
         try:
-            factor = int(data.get(key, 1))
+            factor = int(value)
         except (TypeError, ValueError):
             factor = 1
         return min(max(1, factor), MAX_SCALE)
@@ -651,6 +670,9 @@ class ManagedSwitchConfigButtonAction:
         if self.loops:
             await self._run_loop( data, context )
             return
+
+        # Non looping runs see repeat_count 0, so one sequence works with and without the loop.
+        data = { **data, 'repeat_count': 0 }
 
         if factor > 1 and self.blueprint.scale_field and sequence_has_fields( self.sequence, self.blueprint.scale_field ):
             # Run once with the fields multiplied: a fast scroll of N notches dims by

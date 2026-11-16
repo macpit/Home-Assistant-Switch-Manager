@@ -17,6 +17,14 @@ BLUEPRINT_ACTION_SCHEMA = vol.Schema({
     # Name of a numeric data field used as repeat count for the whole sequence
     # (`presses` runs a discrete action once per notch). Alternative to scale_field.
     vol.Optional('repeat'): cv.string,
+    # Where the press / notch count comes from when the event has no `presses` field
+    # (only event entities get one): a numeric data field, optionally nested
+    # (`params.step_size`), divided by `per` (e.g. 13 per notch on a Tuya knob).
+    # Feeds scale_field, so the speed of a turn sets the size of the step.
+    vol.Optional('presses_from'): vol.Schema({
+        vol.Required('key'): cv.string,
+        vol.Optional('per', default=1): vol.All(vol.Coerce(float), vol.Range(min=0.001)),
+    }),
     # Title of the action (same button) whose event ends a "loop until release" run
     # of this action. Derived by convention (`hold` -> `hold (released)` / `released`)
     # when omitted; set it explicitly for blueprints that name things differently.

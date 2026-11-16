@@ -18,9 +18,9 @@ buttons:
             value: triple_press
       - title: hold
         conditions:
-          - key: action
+          - key: event_type
             value: hold_press
       - title: hold (released)
         conditions:
-          - key: action
+          - key: event_type
             value: long_press
